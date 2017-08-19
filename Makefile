@@ -11,7 +11,7 @@ OBJ_PATH = obj
 
 INCLUDES = 
 COMPILER_FLAGS = -Wall -g
-LINK_FLAGS = -lSDL2 -lSDL2_Image -lSDL2_Mixer -lm
+LINK_FLAGS = -lSDL2 -lSDL2_image -lSDL2_mixer -lm
 
 CFLAGS = $(COMPILER_FLAGS)
 ifeq ($(OS), Windows_NT)
