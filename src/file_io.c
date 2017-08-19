@@ -438,8 +438,8 @@ struct bstrList *get_replay_list()
         if(!d)
             break;
 
-        if(d->d_type != DT_REG)
-            continue;
+        /* if(d->d_type != DT_REG) */
+        /*     continue; */
 
         num++;
         if(num > b->qty) {
