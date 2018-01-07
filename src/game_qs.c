@@ -1082,7 +1082,12 @@ int qs_game_quit(game_t *g)
     if(!g)
         return -1;
 
-    //qrsdata *q = g->data;
+    qrsdata *q = g->data;
+    
+    if (!q->is_practice)
+    {
+        scoredb_add(g->origin->scores, q->replay);
+    }
 
     keyflags_init(g->origin->keys[0]);
 
@@ -1090,7 +1095,7 @@ int qs_game_quit(game_t *g)
         grid_destroy(g->field);
 
     if(g->data)
-        qrsdata_destroy(g->data);
+        qrsdata_destroy(q);
 
     Mix_HaltMusic();
 
