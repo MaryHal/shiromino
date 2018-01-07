@@ -10,6 +10,7 @@
 #include "grid.h"
 #include "timer.h"
 #include "piecedef.h"
+#include "replay.h"
 
 #include "game_menu.h" // questionable dependency - TODO look into these
 #include "game_qs.h" // questionable dependency
@@ -956,13 +957,13 @@ int qrs_start_record(game_t *g)
     q->replay->mlen = 36000;
     q->replay->mode = q->mode_type;
     q->replay->mode_flags = q->mode_flags;
-   q->replay->seed = q->randomizer_seed;
-   q->replay->grade = NO_GRADE;
-   q->replay->time = 0;
-   q->replay->starting_level = q->level;
-   q->replay->ending_level = 0;
+    q->replay->seed = q->randomizer_seed;
+    q->replay->grade = NO_GRADE;
+    q->replay->time = 0;
+    q->replay->starting_level = q->level;
+    q->replay->ending_level = 0;
 
-   q->replay->date = time(0);
+    q->replay->date = time(0);
 
     q->recording = 1;
     return 0;
@@ -976,18 +977,19 @@ int qrs_end_record(game_t *g)
     q->replay->ending_level = q->level;
     q->replay->grade = q->grade;
 
-    write_replay_file(q->replay);
+    scoredb_add(g->origin->scores, q->replay);
 
     g2_seed_restore();
     q->recording = 0;
     return 0;
 }
 
-int qrs_load_replay(game_t *g, char *filename)
+int qrs_load_replay(game_t *g, int replay_id)
 {
     qrsdata *q = g->data;
 
-    q->replay = read_replay_file(filename, 1);
+    q->replay = malloc(sizeof(struct replay));
+    scoredb_get_full_replay(g->origin->scores, q->replay, replay_id);
 
     return 0;
 }

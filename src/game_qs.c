@@ -16,6 +16,8 @@
 #include "qrs.h"
 #include "timer.h"
 
+#include "replay.h"
+
 const char *grade_names[37] =
 {
     "  9", "  8", "  7", "  6", "  5", "  4", "  3", "  2", "  1",
@@ -473,7 +475,7 @@ static void update_music(qrsdata *q, coreState *cs)
     }
 }
 
-game_t *qs_game_create(coreState *cs, int level, unsigned int flags, char *replay_fname)
+game_t *qs_game_create(coreState *cs, int level, unsigned int flags, int replay_id)
 {
     game_t *g = malloc(sizeof(game_t));
     qrsdata *q = NULL;
@@ -518,8 +520,8 @@ game_t *qs_game_create(coreState *cs, int level, unsigned int flags, char *repla
 
     q->randomizer = NULL;
 
-    if(replay_fname) {
-        qrs_load_replay(g, replay_fname);
+    if(replay_id >= 0) {
+        qrs_load_replay(g, replay_id);
         if(!q->replay) {
             free(q->p1);
             free(q->p1counters);
@@ -1080,7 +1082,7 @@ int qs_game_quit(game_t *g)
     if(!g)
         return -1;
 
-    //qrsdata *q = g->data;
+    qrsdata *q = g->data;
 
     keyflags_init(g->origin->keys[0]);
 
@@ -1088,7 +1090,7 @@ int qs_game_quit(game_t *g)
         grid_destroy(g->field);
 
     if(g->data)
-        qrsdata_destroy(g->data);
+        qrsdata_destroy(q);
 
     Mix_HaltMusic();
 

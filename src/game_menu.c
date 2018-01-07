@@ -17,6 +17,7 @@
 #include "game_qs.h"
 #include "game_menu.h"
 #include "gfx_menu.h"
+#include "replay.h"
 
 struct menu_opt *std_game_multiopt_create(coreState *cs, unsigned int mode, int num_sections, bstring label)
 {
@@ -821,7 +822,7 @@ int menu_input(game_t *g)
                                 g->origin->p1game = qs_game_create( *((coreState **)(d4->args.ptrs[0])),
                                                                          *((int *)(d4->args.ptrs[1])),
                                                                          *((unsigned int *)(d4->args.ptrs[2])),
-                                                                         *((char **)(d4->args.ptrs[3]))
+                                                                         *((int*)(d4->args.ptrs[3]))
                                                                        );
                                 if(g->origin->p1game) {
                                     g->origin->p1game->init(g->origin->p1game);
@@ -830,7 +831,7 @@ int menu_input(game_t *g)
                                 }
                             }
                         } else {
-                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NULL);
+                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NO_REPLAY);
                             if(g->origin->p1game) {
                                 g->origin->p1game->init(g->origin->p1game);
 
@@ -870,11 +871,11 @@ int menu_input(game_t *g)
                     case QUINTESSE:
                         if(d6->args[d6->selection].ptrs) {
                             if(d6->args[d6->selection].ptrs[0] && d6->args[d6->selection].ptrs[1] && d6->args[d6->selection].ptrs[2] && d6->args[d6->selection].ptrs[3]) {
-                                g->origin->p1game = qs_game_create( *((coreState **)(d6->args[d6->selection].ptrs[0])),
-                                                                         *((int *)(d6->args[d6->selection].ptrs[1])),
-                                                                         *((unsigned int *)(d6->args[d6->selection].ptrs[2])),
-                                                                         *((char **)(d6->args[d6->selection].ptrs[3]))
-                                                                       );
+                                g->origin->p1game = qs_game_create(*((coreState **)(d6->args[d6->selection].ptrs[0])),
+                                                                   *((int *)(d6->args[d6->selection].ptrs[1])),
+                                                                   *((unsigned int *)(d6->args[d6->selection].ptrs[2])),
+                                                                   NO_REPLAY 
+                                );
                                 if(g->origin->p1game) {
                                     g->origin->p1game->init(g->origin->p1game);
 
@@ -882,7 +883,7 @@ int menu_input(game_t *g)
                                 }
                             }
                         } else {
-                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NULL);
+                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NO_REPLAY);
                             if(g->origin->p1game) {
                                 g->origin->p1game->init(g->origin->p1game);
 
@@ -1221,7 +1222,7 @@ int mload_practice(game_t *g, int val)
 
     cs->menu_input_override = 1;
 
-    cs->p1game = qs_game_create(cs, 0, QRS_PRACTICE|TETROMINO_ONLY, NULL);
+    cs->p1game = qs_game_create(cs, 0, QRS_PRACTICE|TETROMINO_ONLY, NO_REPLAY);
     cs->p1game->init(cs->p1game);
 
     qrsdata *q = cs->p1game->data;
@@ -1706,16 +1707,9 @@ int mload_replay(game_t *g, int val)
     struct action_opt_data *d1 = NULL;
     struct game_opt_data *d4 = NULL;
 
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int num = 0;
-
-    struct bstrList *filenames = NULL;
-    struct bstrList *filenames_sorted = NULL;
-
     struct replay *r = NULL;
-    struct replay **replaylist = NULL;
+    int replayCount = 0;
+    struct replay *replaylist = scoredb_get_replay_list(g->origin->scores, 0, &replayCount);
 
     bstring label = NULL;
     nz_timer *t = nz_timer_create(60);
@@ -1740,68 +1734,9 @@ int mload_replay(game_t *g, int val)
     d->page_text_x = 640-16;
     d->page_text_y = 16;
 
-    filenames = get_replay_list();
-    if(filenames) {
-        filenames_sorted = malloc(sizeof(struct bstrList));
-        filenames_sorted->qty = filenames->qty;
-        filenames_sorted->entry = malloc(2*filenames->qty * sizeof(bstring));
-
-        for(i = 0; i < filenames->qty; i++) {
-            r = read_replay_file((char *)(filenames->entry[i]->data), 0);
-            if(!r) {
-                continue;
-            }
-
-            if(!num) {
-                replaylist = malloc(2*filenames->qty * sizeof(struct replay *));
-                num++;
-                replaylist[0] = r;
-                filenames_sorted->entry[0] = bstrcpy(filenames->entry[i]);
-                continue;
-            }
-
-            if(num == 1) {
-                if(r == compare_replays(r, replaylist[0])) {
-                    replaylist[1] = replaylist[0];
-                    filenames_sorted->entry[1] = filenames_sorted->entry[0];
-                    replaylist[0] = r;
-                    filenames_sorted->entry[0] = bstrcpy(filenames->entry[i]);
-                } else {
-                    replaylist[1] = r;
-                    filenames_sorted->entry[1] = bstrcpy(filenames->entry[i]);
-                }
-
-                num++;
-                continue;
-            }
-
-            for(j = 0; j < num; j++) {
-                if(r == compare_replays(r, replaylist[j])) {
-                    for(k = num+1; k > j; k--) {
-                        replaylist[k] = replaylist[k-1];
-                        filenames_sorted->entry[k] = filenames_sorted->entry[k-1];
-                    }
-
-                    replaylist[j] = r;
-                    filenames_sorted->entry[j] = bstrcpy(filenames->entry[i]);
-                    break;
-                }
-
-                replaylist[num] = r;
-                filenames_sorted->entry[num] = bstrcpy(filenames->entry[i]);
-            }
-
-            num++;
-        }
-
-        replaylist = realloc(replaylist, num * sizeof(struct replay *));
-        filenames_sorted->entry = realloc(filenames_sorted->entry, num * sizeof(bstring));
-        filenames_sorted->qty = num;
-
-        bstrListDestroy(filenames);
-
-        d->menu = malloc((num+1) * sizeof(struct menu_opt *));
-        d->numopts = num+1;
+    if(replaylist) {
+        d->numopts = replayCount + 1;
+        d->menu = malloc(d->numopts * sizeof(struct menu_opt *));
         d->menu[0] = menu_opt_create(MENU_ACTION, NULL, bfromcstr("RETURN"));
         m = d->menu[0];
         d1 = m->data;
@@ -1811,14 +1746,15 @@ int mload_replay(game_t *g, int val)
         m->y = 60;
         m->label_text_flags = DRAWTEXT_THIN_FONT;
 
-        for(i = 1; i < num+1; i++) {
+        for(int i = 1; i < replayCount + 1; i++) {
             d->menu[i] = menu_opt_create(MENU_GAME, NULL, NULL);
-            r = replaylist[i-1];
+            r = &replaylist[i - 1];
             t->time = r->time;
+
             ts = localtime(&r->date);
             strftime(strbuf, sizeof(strbuf), "%Y.%m.%d", ts);
 
-            switch(replaylist[i-1]->mode) {
+            switch(r->mode) {
                 case MODE_PENTOMINO:
                     label = bformat("%s  PENTOMINO  %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
                     break;
@@ -1850,39 +1786,21 @@ int mload_replay(game_t *g, int val)
             d4->args.ptrs[0] = malloc(sizeof(coreState *));
             d4->args.ptrs[1] = malloc(sizeof(int));
             d4->args.ptrs[2] = malloc(sizeof(unsigned int));
-            d4->args.ptrs[3] = malloc(sizeof(char *));
+            d4->args.ptrs[3] = malloc(sizeof(int));
             *(coreState **)(d4->args.ptrs[0]) = g->origin;
             *(int *)(d4->args.ptrs[1]) = 0;
             *(unsigned int *)(d4->args.ptrs[2]) = r->mode;
-            *(char **)(d4->args.ptrs[3]) = malloc((filenames_sorted->entry[i-1]->slen+1) * sizeof(char));
-            strcpy(*(char **)(d4->args.ptrs[3]), (char *)(filenames_sorted->entry[i-1]->data));
+            *(int*)(d4->args.ptrs[3]) = r->index;
             m->x = 20 - 13;
             m->y = 60 + (i % 20) * 20;
             m->label_text_flags = DRAWTEXT_THIN_FONT;
             m->label_text_rgba = (i % 2) ? 0xA0A0FFFF : RGBA_DEFAULT;
         }
-
-        if(filenames_sorted->entry) {
-            for(i = 0; i < num; i++) {
-                if(filenames_sorted->entry[i])
-                    bdestroy(filenames_sorted->entry[i]);
-            }
-
-            free(filenames_sorted->entry);
-        }
-
-        free(filenames_sorted);
     }
 
     nz_timer_destroy(t);
 
-    if(replaylist) {
-        for(i = 0; i < num; i++) {
-            free(replaylist[i]);
-        }
-
-        free(replaylist);
-    }
+    free(replaylist);
 
     return 0;
 }

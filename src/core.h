@@ -25,6 +25,8 @@ typedef struct coreState_ coreState;
 #include "gfx_structures.h"
 #include "audio.h"
 
+#include "scores.h"
+
 enum {
     MODE_INVALID,
     QUINTESSE
@@ -85,22 +87,6 @@ struct settings {
     int mus_volume;
 
     char *home_path;
-};
-
-struct replay {
-    struct keyflags *inputs;
-    unsigned int len;
-    unsigned int mlen;
-
-    int mode;
-    unsigned int mode_flags;
-    long seed;
-    int grade;
-    long time;
-    int starting_level;
-    int ending_level;
-
-    time_t date;
 };
 
 typedef struct game game_t;
@@ -193,6 +179,8 @@ struct coreState_ {
 
     long double avg_sleep_ms_recent_array[RECENT_FRAMES];
     int recent_frame_overload;
+    
+    struct scoredb *scores;
 };
 
 struct game {
@@ -234,7 +222,5 @@ int button_emergency_inactive(coreState *cs);
 int gfx_buttons_input(coreState *cs);
 
 int request_fps(coreState *cs, double fps);
-
-struct replay *compare_replays(struct replay *r1, struct replay *r2);
 
 #endif

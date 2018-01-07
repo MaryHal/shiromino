@@ -1,3 +1,5 @@
+#include "file_io.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,7 +12,7 @@
 #include "zed_dbg.h"
 
 #include "core.h"
-#include "file_io.h"
+#include "replay.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -19,7 +21,7 @@
 #define _mkdir(dir, mode) mkdir(dir, mode)
 #endif
 
-struct settings *parse_cfg(char *filename)
+struct settings *parse_cfg(const char *filename)
 {
     if(!filename)
         return NULL;
@@ -144,7 +146,7 @@ char *get_cfg_string(struct bstrList *lines, bstring label)
     return str;
 }
 
-struct bstrList *split_file(char *filename)
+struct bstrList *split_file(const char *filename)
 {
     //printf("splitting file\n");
 
@@ -285,7 +287,7 @@ int get_asset_volume(struct bstrList *lines, bstring asset_name)
     return volume;
 }
 
-long parse_long(char *str)
+long parse_long(const char *str)
 {
     errno = 0;
     char *temp;
@@ -314,7 +316,7 @@ SDL_Keycode bstr_sdlk(bstring b)
 
 // replay file structure: header (mode, seed, grade, starting level, final level, final time, date) keyflags array
 
-struct replay *read_replay_file(char *filename, int get_inputs)
+struct replay *read_replay_file(const char *filename, int get_inputs)
 {
     if(!filename)
         return NULL;
@@ -341,6 +343,11 @@ struct replay *read_replay_file(char *filename, int get_inputs)
     }
 
     fseek(f, 0, SEEK_SET);
+    
+    uint8_t *buffer = malloc(flen * sizeof(uint8_t));
+    fread(buffer, flen, sizeof(uint8_t), f);
+
+    fclose(f);
 
     r = malloc(sizeof(struct replay));
     r->inputs = NULL;
@@ -354,20 +361,10 @@ struct replay *read_replay_file(char *filename, int get_inputs)
     r->starting_level = 0;
     r->ending_level = 0;
     r->date = 0;
-
-    fread(&r->mode, sizeof(int), 1, f);
-    fread(&r->mode_flags, sizeof(int), 1, f);
-    fread(&r->seed, sizeof(long), 1, f);
-    fread(&r->grade, sizeof(int), 1, f);
-    fread(&r->time, sizeof(long), 1, f);
-    fread(&r->starting_level, sizeof(int), 1, f);
-    fread(&r->ending_level, sizeof(int), 1, f);
-    fread(&r->date, sizeof(long), 1, f);
-    fread(&r->len, sizeof(int), 1, f);
+    
+    read_replay_from_memory(r, buffer, flen);
 
     if(r->len != (flen - REPLAY_HEADER_SIZE) / sizeof(struct keyflags)) {
-        fclose(f);
-        free(r);
         return NULL;
         /*printf("Warning: skipping malformed replay file: %s\n", filename);
         if(r->len > (flen - REPLAY_HEADER_SIZE) / 40)
@@ -375,14 +372,9 @@ struct replay *read_replay_file(char *filename, int get_inputs)
     }
 
     if(!get_inputs) {
-        fclose(f);
         return r;
     }
 
-    r->inputs = malloc(r->len * sizeof(struct keyflags));
-    fread(r->inputs, sizeof(struct keyflags), r->len, f);
-
-    fclose(f);
     return r;
 }
 
