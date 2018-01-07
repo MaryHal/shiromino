@@ -16,6 +16,8 @@
 #include "qrs.h"
 #include "timer.h"
 
+#include "replay.h"
+
 const char *grade_names[37] =
 {
     "  9", "  8", "  7", "  6", "  5", "  4", "  3", "  2", "  1",

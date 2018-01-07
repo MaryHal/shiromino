@@ -17,6 +17,7 @@
 #include "game_qs.h"
 #include "game_menu.h"
 #include "gfx_menu.h"
+#include "replay.h"
 
 struct menu_opt *std_game_multiopt_create(coreState *cs, unsigned int mode, int num_sections, bstring label)
 {
