@@ -1,3 +1,5 @@
+#include "file_io.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,7 +12,7 @@
 #include "zed_dbg.h"
 
 #include "core.h"
-#include "file_io.h"
+#include "replay.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -316,6 +318,8 @@ SDL_Keycode bstr_sdlk(bstring b)
 
 struct replay *read_replay_file(char *filename, int get_inputs)
 {
+    // TODO: Load file into a buffer then operate on that buffer (so we can
+    // introduce new replay sources, like the sqlite database)
     if(!filename)
         return NULL;
 
