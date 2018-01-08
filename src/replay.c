@@ -1,5 +1,9 @@
 #include "replay.h"
 
+#include "core.h" // TODO: Extract keyflags from core.h
+
+#include <string.h>
+
 struct replay *compare_replays(struct replay *r1, struct replay *r2)
 {
    int m1 = r1->mode;
@@ -38,4 +42,56 @@ struct replay *compare_replays(struct replay *r1, struct replay *r2)
    }
 
    return r1;
+}
+
+uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength)
+{
+    uint8_t *buffer = malloc(sizeof(struct keyflags) * r->len + sizeof(struct replay));
+    
+    size_t bufferOffset = 0;
+    
+    memcpy(buffer + bufferOffset, &r->mode, sizeof(int));
+    bufferOffset += sizeof(int);
+
+    memcpy(buffer + bufferOffset, &r->mode_flags, sizeof(int));
+    bufferOffset += sizeof(int);
+
+    memcpy(buffer + bufferOffset, &r->seed, sizeof(long));
+    bufferOffset += sizeof(long);
+
+    memcpy(buffer + bufferOffset, &r->grade, sizeof(int));
+    bufferOffset += sizeof(int);
+
+    memcpy(buffer + bufferOffset, &r->time, sizeof(long));
+    bufferOffset += sizeof(long);
+
+    memcpy(buffer + bufferOffset, &r->starting_level, sizeof(int));
+    bufferOffset += sizeof(int);
+
+    memcpy(buffer + bufferOffset, &r->ending_level, sizeof(int));
+    bufferOffset += sizeof(int);
+
+    memcpy(buffer + bufferOffset, &r->date, sizeof(long));
+    bufferOffset += sizeof(long);
+
+    memcpy(buffer + bufferOffset, &r->len, sizeof(int));
+    bufferOffset += sizeof(int);
+    
+    /* memcpy(buffer + bufferOffset, r->inputs, sizeof(struct keyflags) * r->len); */
+    /* bufferOffset += sizeof(struct keyflags) * r->len; */
+
+    for (size_t i = 0; i < r->len; i++)
+    {
+        memcpy(buffer + bufferOffset, &r->inputs[i], sizeof(struct keyflags));
+        bufferOffset += sizeof(struct keyflags);
+    }
+
+    *out_replayLength = bufferOffset;
+    
+    return buffer;
+}
+
+void dispose_raw_replay(void* data)
+{
+    free(data);
 }

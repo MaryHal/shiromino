@@ -2,6 +2,9 @@
 #define __REPLAY_H_
 
 #include <time.h>
+#include <stdint.h>
+
+struct keyflags;
 
 struct replay {
     struct keyflags *inputs;
@@ -20,5 +23,8 @@ struct replay {
 };
 
 struct replay *compare_replays(struct replay *r1, struct replay *r2);
+
+uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength);
+void dispose_raw_replay(void* data);
 
 #endif // __REPLAY_H_
