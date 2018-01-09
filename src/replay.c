@@ -44,6 +44,42 @@ struct replay *compare_replays(struct replay *r1, struct replay *r2)
     return r1;
 }
 
+void read_replay_from_memory(struct replay *out_replay, uint8_t *buffer, size_t bufferLength)
+{
+    uint8_t *scanner = buffer;
+
+    out_replay->mode = ((int*)scanner)[0];
+    scanner += sizeof(int);
+    
+    out_replay->mode_flags = ((int*)scanner)[0];
+    scanner += sizeof(int);
+
+    out_replay->seed = ((long*)scanner)[0];
+    scanner += sizeof(long);
+
+    out_replay->grade = ((int*)scanner)[0];
+    scanner += sizeof(int);
+
+    out_replay->time = ((long*)scanner)[0];
+    scanner += sizeof(long);
+
+    out_replay->starting_level = ((int*)scanner)[0];
+    scanner += sizeof(int);
+
+    out_replay->ending_level = ((int*)scanner)[0];
+    scanner += sizeof(int);
+
+    out_replay->date = ((long*)scanner)[0];
+    scanner += sizeof(long);
+
+    out_replay->len = ((int*)scanner)[0];
+    scanner += sizeof(int);
+
+    out_replay->inputs = malloc(out_replay->len * sizeof(struct keyflags));
+    
+    memcpy(out_replay->inputs, scanner, out_replay->len * sizeof(struct keyflags));
+}
+
 uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength)
 {
     // TODO: Endianness?
