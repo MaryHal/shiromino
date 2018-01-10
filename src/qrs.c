@@ -10,6 +10,7 @@
 #include "grid.h"
 #include "timer.h"
 #include "piecedef.h"
+#include "replay.h"
 
 #include "game_menu.h" // questionable dependency - TODO look into these
 #include "game_qs.h" // questionable dependency
@@ -976,7 +977,7 @@ int qrs_end_record(game_t *g)
     q->replay->ending_level = q->level;
     q->replay->grade = q->grade;
 
-    write_replay_file(q->replay);
+    scoredb_add(g->origin->scores, q->replay);
 
     g2_seed_restore();
     q->recording = 0;

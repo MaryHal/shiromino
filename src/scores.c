@@ -85,7 +85,7 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page)
     // TODO: Only show current player's replays?
     // TODO: Pagination? Current interface expects a full list of replays
     static const int pageSize = 20;
-    const char *getReplayListSql = "SELECT scoreId, mode, grade, level, time, date FROM scores;";
+    const char *getReplayListSql = "SELECT scoreId, mode, grade, level, time, date FROM scores ORDER BY mode, level DESC, time;";
 
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplayListSql, -1, &sql, NULL);
