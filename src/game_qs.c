@@ -1083,11 +1083,6 @@ int qs_game_quit(game_t *g)
         return -1;
 
     qrsdata *q = g->data;
-    
-    if (!q->is_practice)
-    {
-        scoredb_add(g->origin->scores, q->replay);
-    }
 
     keyflags_init(g->origin->keys[0]);
 
