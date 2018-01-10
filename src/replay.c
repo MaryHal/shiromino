@@ -44,9 +44,10 @@ struct replay *compare_replays(struct replay *r1, struct replay *r2)
     return r1;
 }
 
-void read_replay_from_memory(struct replay *out_replay, uint8_t *buffer, size_t bufferLength)
+void read_replay_from_memory(struct replay *out_replay, const uint8_t *buffer, size_t bufferLength)
 {
-    uint8_t *scanner = buffer;
+    // Keep the same existing format
+    const uint8_t *scanner = buffer;
 
     out_replay->mode = ((int*)scanner)[0];
     scanner += sizeof(int);

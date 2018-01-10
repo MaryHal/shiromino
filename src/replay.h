@@ -20,11 +20,13 @@ struct replay {
     int ending_level;
 
     time_t date;
+    
+    int index;
 };
 
 struct replay *compare_replays(struct replay *r1, struct replay *r2);
 
-void read_replay_from_memory(struct replay *out_replay, uint8_t *buffer, size_t bufferLength);
+void read_replay_from_memory(struct replay *out_replay, const uint8_t *buffer, size_t bufferLength);
 
 uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength);
 void dispose_raw_replay(void* data);
