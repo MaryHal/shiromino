@@ -822,7 +822,7 @@ int menu_input(game_t *g)
                                 g->origin->p1game = qs_game_create( *((coreState **)(d4->args.ptrs[0])),
                                                                          *((int *)(d4->args.ptrs[1])),
                                                                          *((unsigned int *)(d4->args.ptrs[2])),
-                                                                         *((char **)(d4->args.ptrs[3]))
+                                                                         *((int*)(d4->args.ptrs[3]))
                                                                        );
                                 if(g->origin->p1game) {
                                     g->origin->p1game->init(g->origin->p1game);
@@ -831,7 +831,7 @@ int menu_input(game_t *g)
                                 }
                             }
                         } else {
-                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NULL);
+                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NO_REPLAY);
                             if(g->origin->p1game) {
                                 g->origin->p1game->init(g->origin->p1game);
 
@@ -871,11 +871,11 @@ int menu_input(game_t *g)
                     case QUINTESSE:
                         if(d6->args[d6->selection].ptrs) {
                             if(d6->args[d6->selection].ptrs[0] && d6->args[d6->selection].ptrs[1] && d6->args[d6->selection].ptrs[2] && d6->args[d6->selection].ptrs[3]) {
-                                g->origin->p1game = qs_game_create( *((coreState **)(d6->args[d6->selection].ptrs[0])),
-                                                                         *((int *)(d6->args[d6->selection].ptrs[1])),
-                                                                         *((unsigned int *)(d6->args[d6->selection].ptrs[2])),
-                                                                         *((char **)(d6->args[d6->selection].ptrs[3]))
-                                                                       );
+                                g->origin->p1game = qs_game_create(*((coreState **)(d6->args[d6->selection].ptrs[0])),
+                                                                   *((int *)(d6->args[d6->selection].ptrs[1])),
+                                                                   *((unsigned int *)(d6->args[d6->selection].ptrs[2])),
+                                                                   NO_REPLAY 
+                                );
                                 if(g->origin->p1game) {
                                     g->origin->p1game->init(g->origin->p1game);
 
@@ -883,7 +883,7 @@ int menu_input(game_t *g)
                                 }
                             }
                         } else {
-                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NULL);
+                            g->origin->p1game = qs_game_create(g->origin, 0, 0, NO_REPLAY);
                             if(g->origin->p1game) {
                                 g->origin->p1game->init(g->origin->p1game);
 
@@ -1222,7 +1222,7 @@ int mload_practice(game_t *g, int val)
 
     cs->menu_input_override = 1;
 
-    cs->p1game = qs_game_create(cs, 0, QRS_PRACTICE|TETROMINO_ONLY, NULL);
+    cs->p1game = qs_game_create(cs, 0, QRS_PRACTICE|TETROMINO_ONLY, NO_REPLAY);
     cs->p1game->init(cs->p1game);
 
     qrsdata *q = cs->p1game->data;
@@ -1707,10 +1707,6 @@ int mload_replay(game_t *g, int val)
     struct action_opt_data *d1 = NULL;
     struct game_opt_data *d4 = NULL;
 
-    int i = 0;
-    int j = 0;
-    int k = 0;
-
     struct replay *r = NULL;
     int replayCount = 0;
     struct replay *replaylist = scoredb_get_replay_list(g->origin->scores, 0, &replayCount);
@@ -1750,7 +1746,7 @@ int mload_replay(game_t *g, int val)
         m->y = 60;
         m->label_text_flags = DRAWTEXT_THIN_FONT;
 
-        for(i = 1; i < replayCount + 1; i++) {
+        for(int i = 1; i < replayCount + 1; i++) {
             d->menu[i] = menu_opt_create(MENU_GAME, NULL, NULL);
             r = &replaylist[i - 1];
             t->time = r->time;
@@ -1790,12 +1786,11 @@ int mload_replay(game_t *g, int val)
             d4->args.ptrs[0] = malloc(sizeof(coreState *));
             d4->args.ptrs[1] = malloc(sizeof(int));
             d4->args.ptrs[2] = malloc(sizeof(unsigned int));
-            d4->args.ptrs[3] = malloc(sizeof(char *));
+            d4->args.ptrs[3] = malloc(sizeof(int));
             *(coreState **)(d4->args.ptrs[0]) = g->origin;
             *(int *)(d4->args.ptrs[1]) = 0;
             *(unsigned int *)(d4->args.ptrs[2]) = r->mode;
-            /* *(char **)(d4->args.ptrs[3]) = malloc((filenames_sorted->entry[i-1]->slen+1) * sizeof(char)); */
-            /* strcpy(*(char **)(d4->args.ptrs[3]), (char *)(filenames_sorted->entry[i-1]->data)); */
+            *(int*)(d4->args.ptrs[3]) = i;
             m->x = 20 - 13;
             m->y = 60 + (i % 20) * 20;
             m->label_text_flags = DRAWTEXT_THIN_FONT;

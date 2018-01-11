@@ -475,7 +475,7 @@ static void update_music(qrsdata *q, coreState *cs)
     }
 }
 
-game_t *qs_game_create(coreState *cs, int level, unsigned int flags, char *replay_fname)
+game_t *qs_game_create(coreState *cs, int level, unsigned int flags, int replay_id)
 {
     game_t *g = malloc(sizeof(game_t));
     qrsdata *q = NULL;
@@ -520,8 +520,8 @@ game_t *qs_game_create(coreState *cs, int level, unsigned int flags, char *repla
 
     q->randomizer = NULL;
 
-    if(replay_fname) {
-        qrs_load_replay(g, replay_fname);
+    if(replay_id >= 0) {
+        qrs_load_replay(g, replay_id);
         if(!q->replay) {
             free(q->p1);
             free(q->p1counters);

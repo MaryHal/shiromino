@@ -1,6 +1,8 @@
 #ifndef __REPLAY_H_
 #define __REPLAY_H_
 
+#define NO_REPLAY -1
+
 #include <time.h>
 #include <stdint.h>
 

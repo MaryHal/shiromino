@@ -383,7 +383,7 @@ int qrs_input(game_t *g);
 int qrs_start_record(game_t *g);
 int qrs_end_record(game_t *g);
 
-int qrs_load_replay(game_t *g, char *filename);
+int qrs_load_replay(game_t *g, int replay_id);
 int qrs_start_playback(game_t *g);
 int qrs_end_playback(game_t *g);
 

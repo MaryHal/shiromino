@@ -112,14 +112,15 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
     return replayList;
 }
 
-void scoredb_get_full_replay(struct scoredb *s, struct replay* out_replay)
+
+void scoredb_get_full_replay(struct scoredb *s, struct replay* out_replay, int replay_id)
 {
     const char *getReplaySql = "SELECT replay FROM scores WHERE scoreId = :scoreId;";
     
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
     
-    sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), out_replay->index);
+    sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), replay_id);
     
     int ret = sqlite3_step(sql);
     check(ret == SQLITE_ROW, "Could not get replay count: %s", sqlite3_errmsg(s->db));
