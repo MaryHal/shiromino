@@ -1,4 +1,3 @@
-
 #include "scores.h"
 #include "replay.h"
 
@@ -77,7 +76,7 @@ int scoredb_get_replay_count(struct scoredb *s)
     return replayCount;
 }
 
-struct replay *scoredb_get_replay_list(struct scoredb *s, int page)
+struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_replayCount)
 {
     int replayCount = scoredb_get_replay_count(s);
     struct replay *replayList = malloc(sizeof(struct replay) * replayCount);
@@ -108,7 +107,8 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page)
     
  error:
     sqlite3_finalize(sql);
-    
+
+    *out_replayCount = replayCount;
     return replayList;
 }
 

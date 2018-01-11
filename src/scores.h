@@ -18,7 +18,7 @@ void scoredb_add(struct scoredb *s, struct replay *r);
 int scoredb_get_replay_count(struct scoredb *s);
 
 // Get list of replay descriptors (no replay data)
-struct replay *scoredb_get_replay_list(struct scoredb *s, int page);
+struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_replayCount);
 
 // Refactor this, but this function expects out_replay to have a valid index.
 void scoredb_get_full_replay(struct scoredb *s, struct replay* out_replay);
