@@ -15,7 +15,7 @@ struct scoredb *createOrLoadScoreDb(const char* filename)
     check(ret == SQLITE_OK, "Could not open/create sqlite database: %s", sqlite3_errmsg(s->db));
     
     // TODO: Actually design the database. Replay table? Player table + related columns?
-    const char *createTableSql = "CREATE TABLE IF NOT EXISTS scores (scoreId INTEGER PRIMARY KEY, mode INTEGER, grade INTEGER, level INTEGER, time INTEGER, replay BLOB, date INTEGER);";
+    const char *createTableSql = "CREATE TABLE IF NOT EXISTS scores (scoreId INTEGER PRIMARY KEY, mode INTEGER, grade INTEGER, startlevel INTEGER, level INTEGER, time INTEGER, replay BLOB, date INTEGER);";
     ret = sqlite3_exec(s->db, createTableSql, NULL, NULL, NULL);
     check(ret == 0, "Could not create scores table");
     
@@ -38,7 +38,7 @@ void scoredb_add(struct scoredb *s, struct replay *r)
 {
     sqlite3_stmt *sql;
     
-    const char *insertSql = "INSERT INTO scores (mode, grade, level, time, replay, date) VALUES (:mode, :grade, :level, :time, :replay, strftime('%s', 'now'));";
+    const char *insertSql = "INSERT INTO scores (mode, grade, startLevel, level, time, replay, date) VALUES (:mode, :grade, :startLevel, :level, :time, :replay, strftime('%s', 'now'));";
     sqlite3_prepare_v2(s->db, insertSql, -1, &sql, NULL);
     
     size_t replayLen = 0;
@@ -46,6 +46,7 @@ void scoredb_add(struct scoredb *s, struct replay *r)
     
     sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":mode"),   r->mode);
     sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":grade"),  r->grade);
+    sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":startLevel"),  r->starting_level);
     sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":level"),  r->ending_level);
     sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":time"),   r->time);
     sqlite3_bind_blob(sql, sqlite3_bind_parameter_index(sql, ":replay"), replayData, replayLen, dispose_raw_replay);
@@ -84,7 +85,7 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
     // TODO: Only show current player's replays?
     // TODO: Pagination? Current interface expects a full list of replays
     static const int pageSize = 20;
-    const char *getReplayListSql = "SELECT scoreId, mode, grade, level, time, date FROM scores ORDER BY mode, level DESC, time;";
+    const char *getReplayListSql = "SELECT scoreId, mode, grade, startLevel, level, time, date FROM scores ORDER BY mode, level DESC, time;";
 
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplayListSql, -1, &sql, NULL);
@@ -97,12 +98,13 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
         int ret = sqlite3_step(sql);
         check(ret == SQLITE_ROW, "Could not get replay count: %s", sqlite3_errmsg(s->db));
         
-        replayList[i].index        = sqlite3_column_int(sql, 0);
-        replayList[i].mode         = sqlite3_column_int(sql, 1);
-        replayList[i].grade        = sqlite3_column_int(sql, 2);
-        replayList[i].ending_level = sqlite3_column_int(sql, 3);
-        replayList[i].time         = sqlite3_column_int(sql, 4);
-        replayList[i].date         = sqlite3_column_int(sql, 5);
+        replayList[i].index          = sqlite3_column_int(sql, 0);
+        replayList[i].mode           = sqlite3_column_int(sql, 1);
+        replayList[i].grade          = sqlite3_column_int(sql, 2);
+        replayList[i].starting_level = sqlite3_column_int(sql, 3);
+        replayList[i].ending_level   = sqlite3_column_int(sql, 4);
+        replayList[i].time           = sqlite3_column_int(sql, 5);
+        replayList[i].date           = sqlite3_column_int(sql, 6);
     }
     
  error:

@@ -1790,7 +1790,7 @@ int mload_replay(game_t *g, int val)
             *(coreState **)(d4->args.ptrs[0]) = g->origin;
             *(int *)(d4->args.ptrs[1]) = 0;
             *(unsigned int *)(d4->args.ptrs[2]) = r->mode;
-            *(int*)(d4->args.ptrs[3]) = i;
+            *(int*)(d4->args.ptrs[3]) = r->index;
             m->x = 20 - 13;
             m->y = 60 + (i % 20) * 20;
             m->label_text_flags = DRAWTEXT_THIN_FONT;
