@@ -115,9 +115,13 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
 }
 
 
-void scoredb_get_full_replay(struct scoredb *s, struct replay* out_replay, int replay_id)
+void scoredb_get_full_replay(struct scoredb *s, struct replay *out_replay, int replay_id)
 {
-    const char *getReplaySql = "SELECT replay FROM scores WHERE scoreId = :scoreId;";
+    const char *getReplaySql =
+        "SELECT replay FROM scores "
+        "WHERE mode = :mode "
+        "ORDER BY grade DESC, level DESC, time, date "
+        "LIMIT 1;";
     
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
@@ -125,7 +129,32 @@ void scoredb_get_full_replay(struct scoredb *s, struct replay* out_replay, int r
     sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), replay_id);
     
     int ret = sqlite3_step(sql);
-    check(ret == SQLITE_ROW, "Could not get replay count: %s", sqlite3_errmsg(s->db));
+    check(ret == SQLITE_ROW, "Could not get replay: %s", sqlite3_errmsg(s->db));
+    
+    int replayBufferLength = sqlite3_column_bytes(sql, 0);
+    const uint8_t *replayBuffer = sqlite3_column_blob(sql, 0);
+    
+    read_replay_from_memory(out_replay, replayBuffer, replayBufferLength);
+    
+ error:
+    sqlite3_finalize(sql);
+}
+
+void scoredb_get_full_replay_by_condition(struct scoredb *s, struct replay *out_replay, int mode)
+{
+    const char *getReplaySql =
+        "SELECT replay FROM scores "
+        "WHERE mode = :mode "
+        "ORDER BY grade DESC, level DESC, time, date "
+        "LIMIT 1;";
+    
+    sqlite3_stmt *sql;
+    sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
+    
+    sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":mode"), mode);
+    
+    int ret = sqlite3_step(sql);
+    check(ret == SQLITE_ROW, "Could not get replay: %s", sqlite3_errmsg(s->db));
     
     int replayBufferLength = sqlite3_column_bytes(sql, 0);
     const uint8_t *replayBuffer = sqlite3_column_blob(sql, 0);
