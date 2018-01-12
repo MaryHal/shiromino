@@ -8,6 +8,8 @@
 #include "grid.h"
 #include "timer.h"
 
+#define MAX_SECTIONS 30
+
 #define PSINACTIVE         0x0000
 
 #define PSARE             0x0001
@@ -320,8 +322,8 @@ typedef struct {
 
     bool mroll_unlocked;
     long cur_section_timestamp;
-    int section_times[30];
-    int section_tetrises[30];
+    int section_times[MAX_SECTIONS];
+    int section_tetrises[MAX_SECTIONS];
 
     // values: 1 = set to 2 next time a rotate happens.
     //           2 = lock during THIS frame ( handled by qs_process_lock() )

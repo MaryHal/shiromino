@@ -5,6 +5,7 @@ struct sqlite3;
 typedef struct sqlite3 sqlite3;
 
 struct replay;
+struct player;
 
 struct scoredb {
     sqlite3 *db;
@@ -16,12 +17,15 @@ void scoredb_terminate(struct scoredb *s);
 struct scoredb *scoredb_create(const char *filename);
 void scoredb_destroy(struct scoredb *s);
 
-void scoredb_add(struct scoredb *s, struct replay *r);
+void scoredb_create_player(struct scoredb *s, struct player *out_player, const char *playerName);
+void scoredb_update_player(struct scoredb *s, struct player *p);
 
-int scoredb_get_replay_count(struct scoredb *s);
+void scoredb_add(struct scoredb *s, struct player* p, struct replay *r);
+
+int scoredb_get_replay_count(struct scoredb *s, struct player* p);
 
 // Get list of replay descriptors (no replay data)
-struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_replayCount);
+struct replay *scoredb_get_replay_list(struct scoredb *s, struct player *p, int *out_replayCount);
 
 void scoredb_get_full_replay(struct scoredb *s, struct replay *out_replay, int replay_id);
 void scoredb_get_full_replay_by_condition(struct scoredb *s, struct replay *out_replay, int mode);

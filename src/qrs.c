@@ -972,7 +972,18 @@ int qrs_end_record(game_t *g)
     q->replay->ending_level = q->level;
     q->replay->grade = q->grade;
 
-    scoredb_add(&g->origin->scores, q->replay);
+    scoredb_add(&g->origin->scores, &g->origin->player, q->replay);
+
+    // TODO: Extract this into some (sum) method.
+    int tetrisSum = 0;
+    for (size_t i = 0; i < MAX_SECTIONS; i++)
+    {
+        tetrisSum += q->section_tetrises[i];
+    }
+
+    g->origin->player.tetrisCount += tetrisSum;
+    
+    scoredb_update_player(&g->origin->scores, &g->origin->player);
 
     g2_seed_restore();
     q->recording = 0;

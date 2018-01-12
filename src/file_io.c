@@ -36,6 +36,7 @@ struct settings *parse_cfg(const char *filename)
     bstring mastervolume = bfromcstr("MASTERVOLUME");
     bstring home_path = bfromcstr("HOME_PATH");
     bstring videoscale = bfromcstr("VIDEOSCALE");
+    bstring player_name = bfromcstr("PLAYERNAME");
 
     s->keybinds = get_cfg_bindings(cfg_file_lines);
 
@@ -46,6 +47,7 @@ struct settings *parse_cfg(const char *filename)
     s->master_volume = get_cfg_option(cfg_file_lines, mastervolume);
     s->video_scale = get_cfg_option(cfg_file_lines, videoscale);
     s->home_path = get_cfg_string(cfg_file_lines, home_path);
+    s->player_name = get_cfg_string(cfg_file_lines, player_name);
 
     if(s->sfx_volume == OPTION_INVALID || s->sfx_volume < 0 || s->sfx_volume > 100)
         s->sfx_volume = 100;
@@ -57,7 +59,7 @@ struct settings *parse_cfg(const char *filename)
         s->video_scale = 1;
 
     if(s->home_path) {
-        if(stat(s->home_path, &info) != 0 || !(info.st_mode & S_IFDIR)) {
+        if(stat(s->home_path, &info) != 0 || !S_ISDIR(info.st_mode)) {
             s->home_path = NULL;
             log_err("Invalid HOME_PATH setting");
         }

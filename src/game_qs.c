@@ -598,7 +598,7 @@ game_t *qs_game_create(coreState *cs, int level, unsigned int flags, int replay_
     q->mroll_unlocked = true;
     q->cur_section_timestamp = 0;
 
-    for(int i = 0; i < 30; i++) {
+    for(int i = 0; i < MAX_SECTIONS; i++) {
         q->section_times[i] = -1;
         q->section_tetrises[i] = 0;
     }
