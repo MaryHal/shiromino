@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 
+#define check_bind(db, bind_call) check((bind_call) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg((db)));
+
 void scoredb_init(struct scoredb *s, const char *filename)
 {
     int ret = sqlite3_open_v2(filename, &s->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
@@ -18,7 +20,7 @@ void scoredb_init(struct scoredb *s, const char *filename)
     ret = sqlite3_exec(s->db, createTableSql, NULL, NULL, NULL);
     check(ret == 0, "Could not create scores table");
 
-    debug("Opened scoredb %s", filename);
+    log_info("Opened scoredb %s", filename);
     
     // TODO: Create a view with human-readable data
     
@@ -64,17 +66,19 @@ void scoredb_add(struct scoredb *s, struct replay *r)
     size_t replayLen = 0;
     uint8_t *replayData = generate_raw_replay(r, &replayLen);
     
-    check(sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":mode"),       r->mode) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
-    check(sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":grade"),      r->grade) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
-    check(sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":startLevel"), r->starting_level) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
-    check(sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":level"),      r->ending_level) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
-    check(sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":time"),       r->time) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
-    check(sqlite3_bind_blob(sql, sqlite3_bind_parameter_index(sql, ":replay"),     replayData, replayLen, NULL) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg(s->db));
+    int ret = 0;
     
-    int ret = sqlite3_step(sql);
+    check_bind(s->db, sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":mode"),       r->mode));
+    check_bind(s->db, sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":grade"),      r->grade));
+    check_bind(s->db, sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":startLevel"), r->starting_level));
+    check_bind(s->db, sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":level"),      r->ending_level));
+    check_bind(s->db, sqlite3_bind_int(sql,  sqlite3_bind_parameter_index(sql, ":time"),       r->time));
+    check_bind(s->db, sqlite3_bind_blob(sql, sqlite3_bind_parameter_index(sql, ":replay"),     replayData, replayLen, NULL));
+    
+    ret = sqlite3_step(sql);
     check(ret == SQLITE_DONE, "Could not insert value into scores table: %s", sqlite3_errmsg(s->db));
 
-    debug("Wrote replay: %s", replayDescriptor);
+    log_info("Wrote replay: %s", replayDescriptor);
         
  error:
     sqlite3_finalize(sql);
@@ -149,10 +153,9 @@ void scoredb_get_full_replay(struct scoredb *s, struct replay *out_replay, int r
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
     
-    int ret = sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), replay_id);
-    check(ret == SQLITE_OK, "Could not bind parameter: %s", sqlite3_errmsg(s->db));
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), replay_id));
     
-    ret = sqlite3_step(sql);
+    int ret = sqlite3_step(sql);
     check(ret == SQLITE_ROW, "Could not get replay: %s", sqlite3_errmsg(s->db));
     
     int replayBufferLength = sqlite3_column_bytes(sql, 0);
@@ -175,7 +178,7 @@ void scoredb_get_full_replay_by_condition(struct scoredb *s, struct replay *out_
     sqlite3_stmt *sql;
     sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
     
-    sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":mode"), mode);
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":mode"), mode));
     
     int ret = sqlite3_step(sql);
     check(ret == SQLITE_ROW, "Could not get replay: %s", sqlite3_errmsg(s->db));
