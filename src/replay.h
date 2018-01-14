@@ -3,13 +3,14 @@
 
 #define NO_REPLAY -1
 
+#define MAX_KEYFLAGS 73200 
+
 #include <time.h>
 #include <stdint.h>
 
-struct keyflags;
+#include "core.h" // TODO: Extract keyflags from core.h
 
 struct replay {
-    struct keyflags *inputs;
     unsigned int len;
     unsigned int mlen;
 
@@ -24,9 +25,11 @@ struct replay {
     time_t date;
     
     int index;
+
+    struct keyflags inputs[MAX_KEYFLAGS];
 };
 
-struct replay *compare_replays(struct replay *r1, struct replay *r2);
+void get_replay_descriptor(struct replay *r, char *buffer, size_t bufferLength);
 
 void read_replay_from_memory(struct replay *out_replay, const uint8_t *buffer, size_t bufferLength);
 

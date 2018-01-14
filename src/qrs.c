@@ -55,9 +55,6 @@ void qrsdata_destroy(qrsdata *q)
     free(q->piecepool);
 
     if(q->replay) {
-        if(q->replay->inputs)
-            free(q->replay->inputs);
-
         free(q->replay);
     }
 
@@ -924,22 +921,18 @@ int qrs_input(game_t *g)
     }
 
     if(q->recording) {
-        q->replay->len++;
-        if(q->replay->len > q->replay->mlen) {
-            q->replay->mlen *= 2;
-            q->replay->inputs = realloc(q->replay->inputs, q->replay->mlen*sizeof(struct keyflags));
-        }
+        q->replay->inputs[q->replay->len].left = k->left;
+        q->replay->inputs[q->replay->len].right = k->right;
+        q->replay->inputs[q->replay->len].up = k->up;
+        q->replay->inputs[q->replay->len].down = k->down;
+        q->replay->inputs[q->replay->len].start = k->start;
+        q->replay->inputs[q->replay->len].a = k->a;
+        q->replay->inputs[q->replay->len].b = k->b;
+        q->replay->inputs[q->replay->len].c = k->c;
+        q->replay->inputs[q->replay->len].d = k->d;
+        q->replay->inputs[q->replay->len].escape = 0;
 
-        q->replay->inputs[q->replay->len - 1].left = k->left;
-        q->replay->inputs[q->replay->len - 1].right = k->right;
-        q->replay->inputs[q->replay->len - 1].up = k->up;
-        q->replay->inputs[q->replay->len - 1].down = k->down;
-        q->replay->inputs[q->replay->len - 1].start = k->start;
-        q->replay->inputs[q->replay->len - 1].a = k->a;
-        q->replay->inputs[q->replay->len - 1].b = k->b;
-        q->replay->inputs[q->replay->len - 1].c = k->c;
-        q->replay->inputs[q->replay->len - 1].d = k->d;
-        q->replay->inputs[q->replay->len - 1].escape = 0;
+        q->replay->len++;
     }
 
    return 0;
@@ -952,7 +945,9 @@ int qrs_start_record(game_t *g)
     g2_seed_bkp();
 
     q->replay = malloc(sizeof(struct replay));
-    q->replay->inputs = malloc(36000*sizeof(struct keyflags));
+
+    memset(q->replay->inputs, 0, sizeof(struct keyflags) * MAX_KEYFLAGS);
+        
     q->replay->len = 0;
     q->replay->mlen = 36000;
     q->replay->mode = q->mode_type;
@@ -977,7 +972,7 @@ int qrs_end_record(game_t *g)
     q->replay->ending_level = q->level;
     q->replay->grade = q->grade;
 
-    scoredb_add(g->origin->scores, q->replay);
+    scoredb_add(&g->origin->scores, q->replay);
 
     g2_seed_restore();
     q->recording = 0;
@@ -989,7 +984,7 @@ int qrs_load_replay(game_t *g, int replay_id)
     qrsdata *q = g->data;
 
     q->replay = malloc(sizeof(struct replay));
-    scoredb_get_full_replay(g->origin->scores, q->replay, replay_id);
+    scoredb_get_full_replay(&g->origin->scores, q->replay, replay_id);
 
     return 0;
 }
