@@ -493,7 +493,8 @@ int init(coreState *cs, struct settings *s)
 
    //check(gfx_rendercopy(cs, blank, NULL, NULL) > -1, "SDL_RenderCopy: Error: %s\n", SDL_GetError());
    
-   cs->scores = createOrLoadScoreDb("scores.db");
+   static const char scoredb_file[] = "scores.db";
+   scoredb_init(&cs->scores, scoredb_file);
    
    cs->menu = menu_create(cs);
    check(cs->menu != NULL, "menu_create returned failure\n");
@@ -510,7 +511,7 @@ void quit(coreState *cs)
 {
    int i = 0;
    
-   scoredb_destroy(cs->scores);
+   scoredb_terminate(&cs->scores);
 
    if(cs->assets) {
 

@@ -180,7 +180,7 @@ struct coreState_ {
     long double avg_sleep_ms_recent_array[RECENT_FRAMES];
     int recent_frame_overload;
     
-    struct scoredb *scores;
+    struct scoredb scores;
 };
 
 struct game {

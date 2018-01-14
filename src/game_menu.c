@@ -1709,13 +1709,7 @@ int mload_replay(game_t *g, int val)
 
     struct replay *r = NULL;
     int replayCount = 0;
-    struct replay *replaylist = scoredb_get_replay_list(g->origin->scores, 0, &replayCount);
-
-    bstring label = NULL;
-    nz_timer *t = nz_timer_create(60);
-
-    struct tm* ts;
-    char strbuf[80];
+    struct replay *replaylist = scoredb_get_replay_list(&g->origin->scores, 0, &replayCount);
 
     menu_clear(g);        // data->menu guaranteed to be NULL upon return
 
@@ -1749,35 +1743,13 @@ int mload_replay(game_t *g, int val)
         for(int i = 1; i < replayCount + 1; i++) {
             d->menu[i] = menu_opt_create(MENU_GAME, NULL, NULL);
             r = &replaylist[i - 1];
-            t->time = r->time;
 
-            ts = localtime(&r->date);
-            strftime(strbuf, sizeof(strbuf), "%Y.%m.%d", ts);
+            const uint8_t BUF_SIZE = 64;
+            char replayDescriptor[BUF_SIZE];
 
-            switch(r->mode) {
-                case MODE_PENTOMINO:
-                    label = bformat("%s  PENTOMINO  %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                case MODE_G2_DEATH:
-                    label = bformat("%s  G2 DEATH   %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                case MODE_G3_TERROR:
-                    label = bformat("%s  G3 TERROR  %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                case MODE_G1_20G:
-                    label = bformat("%s  G1 20G     %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                case MODE_G1_MASTER:
-                    label = bformat("%s  G1 MASTER  %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                case MODE_G2_MASTER:
-                    label = bformat("%s  G2 MASTER  %4d-%-4d  %02d:%02d:%02d   %s", get_grade_name(r->grade), r->starting_level, r->ending_level, timegetmin(t), timegetsec(t) % 60, timegetmsec(t)/10, strbuf);
-                    break;
-                default:
-                    break;
-            }
+            get_replay_descriptor(r, replayDescriptor, BUF_SIZE);
 
-            d->menu[i]->label = label;
+            d->menu[i]->label = bfromcstr(replayDescriptor);
             m = d->menu[i];
             d4 = m->data;
             d4->mode = QUINTESSE;
@@ -1797,8 +1769,6 @@ int mload_replay(game_t *g, int val)
             m->label_text_rgba = (i % 2) ? 0xA0A0FFFF : RGBA_DEFAULT;
         }
     }
-
-    nz_timer_destroy(t);
 
     free(replaylist);
 

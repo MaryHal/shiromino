@@ -350,7 +350,6 @@ struct replay *read_replay_file(const char *filename, int get_inputs)
     fclose(f);
 
     r = malloc(sizeof(struct replay));
-    r->inputs = NULL;
     r->len = 0;
     r->mlen = 0;
     r->mode = 0;
