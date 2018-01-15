@@ -26,6 +26,7 @@ typedef struct coreState_ coreState;
 #include "audio.h"
 
 #include "scores.h"
+#include "player.h"
 
 enum {
     MODE_INVALID,
@@ -87,6 +88,8 @@ struct settings {
     int mus_volume;
 
     char *home_path;
+
+    const char *player_name;
 };
 
 typedef struct game game_t;
@@ -181,6 +184,7 @@ struct coreState_ {
     int recent_frame_overload;
     
     struct scoredb scores;
+    struct player player;
 };
 
 struct game {

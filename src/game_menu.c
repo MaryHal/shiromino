@@ -1709,7 +1709,7 @@ int mload_replay(game_t *g, int val)
 
     struct replay *r = NULL;
     int replayCount = 0;
-    struct replay *replaylist = scoredb_get_replay_list(&g->origin->scores, 0, &replayCount);
+    struct replay *replaylist = scoredb_get_replay_list(&g->origin->scores, &g->origin->player, &replayCount);
 
     menu_clear(g);        // data->menu guaranteed to be NULL upon return
 

@@ -972,7 +972,7 @@ int qrs_end_record(game_t *g)
     q->replay->ending_level = q->level;
     q->replay->grade = q->grade;
 
-    scoredb_add(&g->origin->scores, q->replay);
+    scoredb_add(&g->origin->scores, &g->origin->player, q->replay);
 
     g2_seed_restore();
     q->recording = 0;

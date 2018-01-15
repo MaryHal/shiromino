@@ -425,6 +425,8 @@ int init(coreState *cs, struct settings *s)
       cs->settings->sfx_volume = s->sfx_volume;
       cs->settings->mus_volume = s->mus_volume;
       cs->settings->master_volume = s->master_volume;
+      cs->settings->player_name = s->player_name;
+
       cs->sfx_volume = s->sfx_volume;
       cs->mus_volume = s->mus_volume;
       cs->master_volume = s->master_volume;
@@ -495,7 +497,8 @@ int init(coreState *cs, struct settings *s)
    
    static const char scoredb_file[] = "scores.db";
    scoredb_init(&cs->scores, scoredb_file);
-   
+   scoredb_create_player(&cs->scores, &cs->player, cs->settings->player_name);
+
    cs->menu = menu_create(cs);
    check(cs->menu != NULL, "menu_create returned failure\n");
 

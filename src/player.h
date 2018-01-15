@@ -4,7 +4,7 @@
 struct player {
     int playerId;
 
-    const char *name;
+    const unsigned char *name;
 
     int tetroCount;
     int pentoCount;
