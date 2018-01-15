@@ -20,10 +20,4 @@ int get_asset_volume(struct bstrList *lines, bstring asset_name);
 long parse_long(const char *str);
 SDL_Keycode bstr_sdlk(bstring b);
 
-struct replay;
-
-struct replay *read_replay_file(const char *filename, int get_inputs);
-int write_replay_file(struct replay *r);
-struct bstrList *get_replay_list();
-
 #endif
