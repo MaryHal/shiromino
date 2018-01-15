@@ -14,17 +14,23 @@ void scoredb_init(struct scoredb *s, const char *filename)
     int ret = sqlite3_open_v2(filename, &s->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
     check(ret == SQLITE_OK, "Could not open/create sqlite database: %s", sqlite3_errmsg(s->db));
 
+    const char enableForeignKeysSql[] =
+        "PRAGMA foreign_keys = ON;";
+
+    ret = sqlite3_exec(s->db, enableForeignKeysSql, NULL, NULL, NULL);
+    check(ret == 0, "Could not enable foreign key constraints");
+
     const char createPlayerDbSql[] =
         "CREATE TABLE IF NOT EXISTS players ("
         "    playerId INTEGER PRIMARY KEY, "
-        "    name VARCHAR(16) "
-        "    tetroCount INTEGER "
-        "    pentoCount INTEGER "
+        "    name VARCHAR(16) UNIQUE NOT NULL, "
+        "    tetroCount INTEGER, "
+        "    pentoCount INTEGER, "
         "    tetrisCount INTEGER "
         ");";
 
     ret = sqlite3_exec(s->db, createPlayerDbSql, NULL, NULL, NULL);
-    check(ret == 0, "Could not create scores table");
+    check(ret == 0, "Could not create players table");
     
     // TODO: Actually design the database. Replay table? Player table + related columns?
     const char createTableSql[] =
@@ -37,7 +43,7 @@ void scoredb_init(struct scoredb *s, const char *filename)
         "    level INTEGER, "
         "    time INTEGER, "
         "    replay BLOB, "
-        "    date INTEGER "
+        "    date INTEGER, "
         "    FOREIGN KEY(playerId) REFERENCES players(playerId) "
         ");";
 
