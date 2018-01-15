@@ -24,9 +24,9 @@ void scoredb_init(struct scoredb *s, const char *filename)
         "CREATE TABLE IF NOT EXISTS players ("
         "    playerId INTEGER PRIMARY KEY, "
         "    name VARCHAR(16) UNIQUE NOT NULL, "
-        "    tetroCount INTEGER, "
-        "    pentoCount INTEGER, "
-        "    tetrisCount INTEGER "
+        "    tetroCount INTEGER DEFAULT(0), "
+        "    pentoCount INTEGER DEFAULT(0), "
+        "    tetrisCount INTEGER DEFAULT(0)"
         ");";
 
     ret = sqlite3_exec(s->db, createPlayerDbSql, NULL, NULL, NULL);
