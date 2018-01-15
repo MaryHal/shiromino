@@ -90,7 +90,7 @@ int scoredb_get_replay_count(struct scoredb *s)
     const char getReplayCountSql[] = "SELECT COUNT(*) FROM scores;";
 
     sqlite3_stmt *sql;
-    sqlite3_prepare_v2(s->db, getReplayCountSql, -1, &sql, NULL);
+    check(sqlite3_prepare_v2(s->db, getReplayCountSql, -1, &sql, NULL) == SQLITE_OK, "Could not prepare sql statement: %s", sqlite3_errmsg(s->db));
     
     int ret = sqlite3_step(sql);
     check(ret == SQLITE_ROW, "Could not get replay count: %s", sqlite3_errmsg(s->db));
@@ -117,7 +117,7 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
         "ORDER BY mode, level DESC, time;";
 
     sqlite3_stmt *sql;
-    sqlite3_prepare_v2(s->db, getReplayListSql, -1, &sql, NULL);
+    check(sqlite3_prepare_v2(s->db, getReplayListSql, -1, &sql, NULL) == SQLITE_OK, "Could not prepare sql statement: %s", sqlite3_errmsg(s->db));
     
     /* sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":pageSize"), pageSize); */
     /* sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":offset"),  page * pageSize); */
@@ -125,7 +125,7 @@ struct replay *scoredb_get_replay_list(struct scoredb *s, int page, int *out_rep
     for (int i = 0; i < replayCount; i++)
     {
         int ret = sqlite3_step(sql);
-        check(ret == SQLITE_ROW, "Could not get replay count: %s", sqlite3_errmsg(s->db));
+        check(ret == SQLITE_ROW, "Could not get replay: %s", sqlite3_errmsg(s->db));
         
         replayList[i].index          = sqlite3_column_int(sql, 0);
         replayList[i].mode           = sqlite3_column_int(sql, 1);
@@ -151,7 +151,7 @@ void scoredb_get_full_replay(struct scoredb *s, struct replay *out_replay, int r
         "WHERE scoreId = :scoreId;";
     
     sqlite3_stmt *sql;
-    sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
+    check(sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL) == SQLITE_OK, "Could not prepare sql statement: %s", sqlite3_errmsg(s->db));
     
     check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":scoreId"), replay_id));
     
@@ -176,7 +176,7 @@ void scoredb_get_full_replay_by_condition(struct scoredb *s, struct replay *out_
         "LIMIT 1;";
     
     sqlite3_stmt *sql;
-    sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL);
+    check(sqlite3_prepare_v2(s->db, getReplaySql, -1, &sql, NULL) == SQLITE_OK, "Could not prepare sql statement: %s", sqlite3_errmsg(s->db));
     
     check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":mode"), mode));
     
