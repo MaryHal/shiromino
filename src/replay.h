@@ -3,7 +3,7 @@
 
 #define NO_REPLAY -1
 
-#define MAX_KEYFLAGS 73200 
+#define MAX_KEYFLAGS 72000 // 20 minutes of inputs (@ 60 fps)
 
 #include <time.h>
 #include <stdint.h>

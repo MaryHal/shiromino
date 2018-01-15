@@ -9,7 +9,7 @@
 
 #define check_bind(db, bind_call) check((bind_call) == SQLITE_OK, "Could not bind parameter value: %s", sqlite3_errmsg((db)));
 
-static const int MAX_PLAYER_NAME_LENGTH;
+static const int MAX_PLAYER_NAME_LENGTH = 64;
 
 void scoredb_init(struct scoredb *s, const char *filename)
 {
