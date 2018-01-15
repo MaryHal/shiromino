@@ -13,13 +13,6 @@
 
 #include "core.h"
 
-#if defined(_WIN32)
-#include <windows.h>
-#define _mkdir(dir, mode) mkdir(dir)
-#else
-#define _mkdir(dir, mode) mkdir(dir, mode)
-#endif
-
 struct settings *parse_cfg(const char *filename)
 {
     if(!filename)

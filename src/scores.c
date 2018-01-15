@@ -32,7 +32,7 @@ void scoredb_init(struct scoredb *s, const char *filename)
     ret = sqlite3_exec(s->db, createPlayerDbSql, NULL, NULL, NULL);
     check(ret == 0, "Could not create players table");
     
-    // TODO: Actually design the database. Replay table? Player table + related columns?
+    // TODO: Actually design the database. Replay table? Player table + related columns? Indexes?
     const char createTableSql[] =
         "CREATE TABLE IF NOT EXISTS scores ("
         "    scoreId INTEGER PRIMARY KEY, "
