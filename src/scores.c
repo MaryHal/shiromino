@@ -121,6 +121,30 @@ void scoredb_create_player(struct scoredb *s, struct player *out_player, const c
     sqlite3_finalize(sql);
 }
 
+void scoredb_update_player(struct scoredb *s, struct player *p)
+{
+    const char updatePlayerSql[] =
+        "UPDATE players "
+        "    SET tetroCount = :tetroCount, "
+        "        pentoCount = :pentoCount, "
+        "       tetrisCount = :tetrisCount "
+        "WHERE playerId = :playerId;";
+
+    sqlite3_stmt *sql;
+    check(sqlite3_prepare_v2(s->db, updatePlayerSql, -1, &sql, NULL) == SQLITE_OK, "Could not prepare sql statement: %s", sqlite3_errmsg(s->db));
+    
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":tetroCount"), p->tetroCount));
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":pentoCount"), p->pentoCount));
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":tetrisCount"), p->tetrisCount));
+    check_bind(s->db, sqlite3_bind_int(sql, sqlite3_bind_parameter_index(sql, ":playerId"), p->playerId));
+
+    int ret = sqlite3_step(sql);
+    check(ret == SQLITE_DONE, "Could not update players table for: %s", sqlite3_errmsg(s->db));
+
+ error:
+    sqlite3_finalize(sql);
+}
+
 void scoredb_add(struct scoredb *s, struct player* p, struct replay *r)
 {
     const uint8_t BUF_SIZE = 64;

@@ -18,6 +18,7 @@ struct scoredb *scoredb_create(const char *filename);
 void scoredb_destroy(struct scoredb *s);
 
 void scoredb_create_player(struct scoredb *s, struct player *out_player, const char *playerName);
+void scoredb_update_player(struct scoredb *s, struct player *p);
 
 void scoredb_add(struct scoredb *s, struct player* p, struct replay *r);
 
