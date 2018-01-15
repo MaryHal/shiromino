@@ -60,7 +60,8 @@ struct settings defaultsettings = {
    .sfx_volume = 100,
    .mus_volume = 100,
    .master_volume = 50,
-   .home_path = NULL
+   .home_path = NULL,
+   .player_name = "ARK"
 };
 
 

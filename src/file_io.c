@@ -47,7 +47,18 @@ struct settings *parse_cfg(const char *filename)
     s->master_volume = get_cfg_option(cfg_file_lines, mastervolume);
     s->video_scale = get_cfg_option(cfg_file_lines, videoscale);
     s->home_path = get_cfg_string(cfg_file_lines, home_path);
+
     s->player_name = get_cfg_string(cfg_file_lines, player_name);
+    if (s->player_name == NULL)
+    {
+        char *player_name_config_key = bstr2cstr(player_name, '\0');
+        log_info("Could not find %s setting in config file. Using default player name \"%s\"",
+                 player_name_config_key,
+                 defaultsettings.player_name);
+        bcstrfree(player_name_config_key); 
+
+        s->player_name = defaultsettings.player_name;
+    }
 
     if(s->sfx_volume == OPTION_INVALID || s->sfx_volume < 0 || s->sfx_volume > 100)
         s->sfx_volume = 100;
