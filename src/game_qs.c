@@ -1084,8 +1084,6 @@ int qs_game_quit(game_t *g)
 
     qrsdata *q = g->data;
 
-    keyflags_init(g->origin->keys[0]);
-
     if(g->field)
         grid_destroy(g->field);
 

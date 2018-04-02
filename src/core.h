@@ -46,6 +46,14 @@ struct bindings {
     SDL_Keycode escape;
 };
 
+typedef enum {
+    DAS_NONE,
+    DAS_LEFT,
+    DAS_RIGHT,
+    DAS_UP,
+    DAS_DOWN
+} das_direction;
+
 struct keyflags {
     Uint8 left;
     Uint8 right;
@@ -158,7 +166,13 @@ struct coreState_ {
     int gfx_animations_max;
     int gfx_buttons_max;
 
-    struct keyflags *keys[2];
+    struct keyflags keys_raw;
+    struct keyflags prev_keys;
+    struct keyflags keys;
+    struct keyflags pressed;
+    das_direction dir;
+    int hold_time;
+    
     SDL_Joystick *joystick;
     int mouse_x;
     int mouse_y;
@@ -205,8 +219,11 @@ struct game {
 extern struct bindings defaultkeybinds[2];
 extern struct settings defaultsettings;
 
-void keyflags_init(struct keyflags *k);
-void keyflags_update(coreState *cs);
+int is_left_input_repeat(coreState *cs, int delay);
+int is_right_input_repeat(coreState *cs, int delay);
+int is_up_input_repeat(coreState *cs, int delay);
+int is_down_input_repeat(coreState *cs, int delay);
+
 struct bindings *bindings_copy(struct bindings *src);
 
 coreState *coreState_create();
@@ -221,6 +238,9 @@ void quit(coreState *cs);
 int run(coreState *cs);
 int procevents(coreState *cs);
 int procgame(game_t *g, int input_enabled);
+
+void update_input_repeat(coreState *cs);
+void update_pressed(coreState *cs);
 
 int button_emergency_inactive(coreState *cs);
 int gfx_buttons_input(coreState *cs);

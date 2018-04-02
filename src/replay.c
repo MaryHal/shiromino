@@ -4,11 +4,50 @@
 
 #include <string.h>
 
+enum packed_input_mask {
+    pi_left   = 1 << 0,
+    pi_right  = 1 << 1,
+    pi_up     = 1 << 2,
+    pi_down   = 1 << 3,
+    pi_a      = 1 << 4,
+    pi_b      = 1 << 5,
+    pi_c      = 1 << 6,
+    pi_d      = 1 << 7,
+};
+
+struct packed_input pack_input(struct keyflags *k)
+{
+    struct packed_input i = { 0 };
+
+    if (k->left)  i.data |= pi_left;
+    if (k->right) i.data |= pi_right;
+    if (k->up)    i.data |= pi_up;
+    if (k->down)  i.data |= pi_down;
+    if (k->a)     i.data |= pi_a;
+    if (k->b)     i.data |= pi_b;
+    if (k->c)     i.data |= pi_c;
+    if (k->d)     i.data |= pi_d;
+
+    return i;
+}
+
+void unpack_input(struct packed_input p, struct keyflags *out_keys)
+{
+    out_keys->left  = p.data & pi_left;
+    out_keys->right = p.data & pi_right;
+    out_keys->up    = p.data & pi_up;
+    out_keys->down  = p.data & pi_down;
+    out_keys->a     = p.data & pi_a;
+    out_keys->b     = p.data & pi_b;
+    out_keys->c     = p.data & pi_c;
+    out_keys->d     = p.data & pi_d;
+}
+
 void get_replay_descriptor(struct replay *r, char *buffer, size_t bufferLength)
 {
     const uint8_t BUF_SIZE = 32;
     char modeStringBuffer[BUF_SIZE];
-    
+
     switch(r->mode) {
         case MODE_PENTOMINO:
             strncpy(modeStringBuffer, "PENTOMINO", BUF_SIZE);
@@ -57,7 +96,7 @@ void read_replay_from_memory(struct replay *out_replay, const uint8_t *buffer, s
 
     out_replay->mode = ((int*)scanner)[0];
     scanner += sizeof(int);
-    
+
     out_replay->mode_flags = ((int*)scanner)[0];
     scanner += sizeof(int);
 
@@ -82,7 +121,7 @@ void read_replay_from_memory(struct replay *out_replay, const uint8_t *buffer, s
     out_replay->len = ((int*)scanner)[0];
     scanner += sizeof(int);
 
-    memcpy(&out_replay->inputs[0], scanner, out_replay->len * sizeof(struct keyflags));
+    memcpy(&out_replay->pinputs[0], scanner, out_replay->len * sizeof(struct packed_input));
 }
 
 uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength)
@@ -90,7 +129,7 @@ uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength)
     // TODO: Endianness?
     uint8_t *buffer = malloc(sizeof(struct replay));
     size_t bufferOffset = 0;
-    
+
     memcpy(buffer + bufferOffset, &r->mode, sizeof(int));
     bufferOffset += sizeof(int);
 
@@ -117,12 +156,12 @@ uint8_t* generate_raw_replay(struct replay *r, size_t *out_replayLength)
 
     memcpy(buffer + bufferOffset, &r->len, sizeof(int));
     bufferOffset += sizeof(int);
-    
-    memcpy(buffer + bufferOffset, &r->inputs, sizeof(struct keyflags) * r->len);
-    bufferOffset += sizeof(struct keyflags) * r->len;
+
+    memcpy(buffer + bufferOffset, &r->pinputs, sizeof(struct packed_input) * r->len);
+    bufferOffset += sizeof(struct packed_input) * r->len;
 
     *out_replayLength = bufferOffset;
-    
+
     return buffer;
 }
 

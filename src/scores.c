@@ -91,7 +91,7 @@ void scoredb_create_player(struct scoredb *s, struct player *out_player, const c
 
     size_t playerNameLength = strnlen(playerName, MAX_PLAYER_NAME_LENGTH);
 
-    check(playerName != NULL && playerNameLength > 0, "Invalid player name (NULL or empty)");
+    check(playerName != NULL && playerNameLength > 0, "Player name is invalid");
     check_bind(s->db, sqlite3_bind_text(sql,  sqlite3_bind_parameter_index(sql, ":playerName"), playerName, playerNameLength, SQLITE_STATIC));
 
     int ret = sqlite3_step(sql);
@@ -175,7 +175,7 @@ void scoredb_add(struct scoredb *s, struct player* p, struct replay *r)
     int ret = sqlite3_step(sql);
     check(ret == SQLITE_DONE, "Could not insert value into scores table: %s", sqlite3_errmsg(s->db));
 
-    log_info("Wrote replay: %s", replayDescriptor);
+    log_info("Wrote replay (%ld): %s", replayLen, replayDescriptor);
         
  error:
     sqlite3_finalize(sql);

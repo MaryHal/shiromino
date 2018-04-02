@@ -67,62 +67,24 @@ struct settings defaultsettings = {
 
 /* </constants> */
 
-
-void keyflags_init(struct keyflags *k)
+int is_left_input_repeat(coreState *cs, int delay)
 {
-   k->left = 0;
-   k->right = 0;
-   k->up = 0;
-   k->down = 0;
-   k->start = 0;
-   k->a = 0;
-   k->b = 0;
-   k->c = 0;
-   k->d = 0;
-   k->escape = 0;
+    return cs->keys.left && cs->dir == DAS_LEFT && cs->hold_time >= delay;
 }
 
-void keyflags_update(coreState *cs)
+int is_right_input_repeat(coreState *cs, int delay)
 {
-   if(!cs)
-      return;
+    return cs->keys.right && cs->dir == DAS_RIGHT && cs->hold_time >= delay;
+}
 
-   int i = 0;
-   struct keyflags *k = NULL;
+int is_up_input_repeat(coreState *cs, int delay)
+{
+    return cs->keys.up && cs->dir == DAS_UP && cs->hold_time >= delay;
+}
 
-   for(i = 0; i < 2; i++) {
-      k = cs->keys[i];
-
-      if(k->left != (Uint8)255)
-         k->left = (k->left) ? (k->left + 1) : 0;      // if <button> was pressed last frame, increment its counter, otherwise do nothing
-
-      if(k->right != (Uint8)255)
-         k->right = (k->right) ? (k->right + 1) : 0;
-
-      if(k->up != (Uint8)255)
-         k->up = (k->up) ? (k->up + 1) : 0;
-
-      if(k->down != (Uint8)255)
-         k->down = (k->down) ? (k->down + 1) : 0;
-
-      if(k->start != (Uint8)255)
-         k->start = (k->start) ? (k->start + 1) : 0;
-
-      if(k->a != (Uint8)255)
-         k->a = (k->a) ? (k->a + 1) : 0;
-
-      if(k->b != (Uint8)255)
-         k->b = (k->b) ? (k->b + 1) : 0;
-
-      if(k->c != (Uint8)255)
-         k->c = (k->c) ? (k->c + 1) : 0;
-
-      if(k->d != (Uint8)255)
-         k->d = (k->d) ? (k->d + 1) : 0;
-
-      if(k->escape != (Uint8)255)
-         k->escape = (k->escape) ? (k->escape + 1) : 0;
-   }
+int is_down_input_repeat(coreState *cs, int delay)
+{
+    return cs->keys.down && cs->dir == DAS_DOWN && cs->hold_time >= delay;
 }
 
 struct bindings *bindings_copy(struct bindings *src)
@@ -247,10 +209,13 @@ coreState *coreState_create()
    cs->assets = malloc(sizeof(struct assetdb));
 
    cs->joystick = NULL;
-   cs->keys[0] = malloc(sizeof(struct keyflags));
-   cs->keys[1] = malloc(sizeof(struct keyflags));
-   keyflags_init(cs->keys[0]);
-   keyflags_init(cs->keys[1]);
+   cs->keys_raw = (struct keyflags) { 0 };
+   cs->prev_keys = (struct keyflags) { 0 };
+   cs->keys = (struct keyflags) { 0 };
+   cs->pressed = (struct keyflags) { 0 };
+   cs->dir = DAS_NONE;
+   cs->hold_time = 0;
+
    cs->mouse_x = 0;
    cs->mouse_y = 0;
    cs->mouse_left_down = 0;
@@ -313,11 +278,6 @@ void coreState_destroy(coreState *cs)
          free(cs->settings->home_path);
 
       free(cs->settings);
-   }
-
-   for(i = 0; i < 2; i++) {
-      if(cs->keys[i])
-         free(cs->keys[i]);
    }
 
    if(cs->pracdata_mirror)
@@ -584,10 +544,16 @@ int run(coreState *cs)
    {
       Uint64 timestamp = SDL_GetPerformanceCounter();
 
+      // TODO: Rearrange the input->draw loop
+      cs->prev_keys = cs->keys;
+
       if(procevents(cs))
       {
          return 1;
       }
+
+      update_input_repeat(cs);
+      update_pressed(cs);
 
       gfx_buttons_input(cs);
 
@@ -641,8 +607,6 @@ int run(coreState *cs)
       gfx_drawanimations(cs, EMERGENCY_OVERRIDE);
 
       SDL_RenderPresent(cs->screen.renderer);
-
-      keyflags_update(cs);
 
       if(cs->sfx_volume != cs->settings->sfx_volume) {
          cs->sfx_volume = cs->settings->sfx_volume;
@@ -726,7 +690,7 @@ int procevents(coreState *cs)
             return 1;
 
          case SDL_JOYAXISMOTION:
-            k = cs->keys[0];
+            k = &cs->keys;
 
             if(event.jaxis.which == 0)
             {
@@ -772,7 +736,7 @@ int procevents(coreState *cs)
             break;
 
          case SDL_JOYHATMOTION:
-            k = cs->keys[0];
+            k = &cs->keys;
 
             if(event.jhat.which == 0)
             {
@@ -812,7 +776,7 @@ int procevents(coreState *cs)
 
          case SDL_JOYBUTTONDOWN:
          case SDL_JOYBUTTONUP:
-            k = cs->keys[0];
+            k = &cs->keys;
             if(joy) {
                rc = SDL_JoystickGetButton(joy, 0);
                if(!rc)
@@ -952,101 +916,44 @@ int procevents(coreState *cs)
                cs->nine_pressed = 1;
             }
 
-            if(cs->settings->keybinds) {
-               kb = cs->settings->keybinds;
-               k = cs->keys[0];
-
-               if((kc == kb->left) && (!k->left))
-                  k->left = 1;
-
-               if((kc == kb->right) && (!k->right))
-                  k->right = 1;
-
-               if((kc == kb->up) && (!k->up))
-                  k->up = 1;
-
-               if((kc == kb->down) && (!k->down))
-                  k->down = 1;
-
-               if((kc == kb->start) && (!k->start))
-                  k->start = 1;
-
-               if((kc == kb->a) && (!k->a))
-                  k->a = 1;
-
-               if((kc == kb->b) && (!k->b))
-                  k->b = 1;
-
-               if((kc == kb->c) && (!k->c))
-                  k->c = 1;
-
-               if((kc == kb->d) && (!k->d))
-                  k->d = 1;
-
-               if((kc == kb->escape) && (!k->escape))
-                  k->escape = 1;
-            }
-
-            if(k->left && k->right) {
-               if(k->left == 1 && k->right > 1)
-                  k->right = 0;
-               else if(k->right == 1 && k->left > 1)
-                  k->left = 0;
-               else {
-                  k->right = 0;
-                  k->left = 0;
-               }
-            }
-
-            if(k->up && k->down) {
-               if(k->up == 1 && k->down > 1)
-                  k->down = 0;
-               else if(k->down == 1 && k->up > 1)
-                  k->up = 0;
-               else {
-                  k->down = 0;
-                  k->up = 0;
-               }
-            }
-
             break;
 
          case SDL_KEYUP:
             kc = event.key.keysym.sym;
 
             if(cs->settings->keybinds) {
-               kb = cs->settings->keybinds;
-               k = cs->keys[0];
+                k = &cs->keys;
+                kb = cs->settings->keybinds;
 
-               if(kc == kb->left)
-                  k->left = 0;
+                if(kc == kb->left)
+                    k->left = 0;
 
-               if(kc == kb->right)
-                  k->right = 0;
+                if(kc == kb->right)
+                    k->right = 0;
 
-               if(kc == kb->up)
-                  k->up = 0;
+                if(kc == kb->up)
+                    k->up = 0;
 
-               if(kc == kb->down)
-                  k->down = 0;
+                if(kc == kb->down)
+                    k->down = 0;
 
-               if(kc == kb->start)
-                  k->start = 0;
+                if(kc == kb->start)
+                    k->start = 0;
 
-               if(kc == kb->a)
-                  k->a = 0;
+                if(kc == kb->a)
+                    k->a = 0;
 
-               if(kc == kb->b)
-                  k->b = 0;
+                if(kc == kb->b)
+                    k->b = 0;
 
-               if(kc == kb->c)
-                  k->c = 0;
+                if(kc == kb->c)
+                    k->c = 0;
 
-               if(kc == kb->d)
-                  k->d = 0;
+                if(kc == kb->d)
+                    k->d = 0;
 
-               if(kc == kb->escape)
-                  k->escape = 0;
+                if(kc == kb->escape)
+                    k->escape = 0;
             }
 
             if(kc == SDLK_LEFT)
@@ -1179,6 +1086,48 @@ int procevents(coreState *cs)
       }
    }
 
+   const uint8_t *keystates = SDL_GetKeyboardState(NULL);
+
+   if(cs->settings->keybinds) {
+       k = &cs->keys_raw;
+       kb = cs->settings->keybinds;
+
+       *k = (struct keyflags) { 0 };
+
+       if(keystates[SDL_GetScancodeFromKey(kb->left)])
+           k->left = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->right)])
+           k->right = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->up)])
+           k->up = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->down)])
+           k->down = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->start)])
+           k->start = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->a)])
+           k->a = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->b)])
+           k->b = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->c)])
+           k->c = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->d)])
+           k->d = 1;
+
+       if(keystates[SDL_GetScancodeFromKey(kb->escape)])
+           k->escape = 1;
+
+       cs->keys = cs->keys_raw;
+   }
+
+
    SDL_GetMouseState(&cs->mouse_x, &cs->mouse_y);
 
    return 0;
@@ -1221,6 +1170,47 @@ int procgame(game_t *g, int input_enabled)
    g->frame_counter++;
 
    return 0;
+}
+
+void update_input_repeat(coreState *cs)
+{
+    struct keyflags *k = &cs->keys;
+
+    if      (cs->dir == DAS_LEFT  && k->right) { cs->hold_time = 0; cs->dir = DAS_RIGHT; }
+    else if (cs->dir == DAS_RIGHT && k->left)  { cs->hold_time = 0; cs->dir = DAS_LEFT; }
+    else if (cs->dir == DAS_UP    && k->down)  { cs->hold_time = 0; cs->dir = DAS_DOWN; }
+    else if (cs->dir == DAS_DOWN  && k->up)    { cs->hold_time = 0; cs->dir = DAS_UP; }
+
+    if      (cs->dir == DAS_LEFT  && k->left)  cs->hold_time++;
+    else if (cs->dir == DAS_RIGHT && k->right) cs->hold_time++;
+    else if (cs->dir == DAS_UP    && k->up)    cs->hold_time++;
+    else if (cs->dir == DAS_DOWN  && k->down)  cs->hold_time++;
+    else
+    {
+        if      (k->left)  cs->dir = DAS_LEFT;
+        else if (k->right) cs->dir = DAS_RIGHT;
+        else if (k->up)    cs->dir = DAS_UP;
+        else if (k->down)  cs->dir = DAS_DOWN;
+        else cs->dir = DAS_NONE;
+        
+        cs->hold_time = 0;
+    }
+}
+
+void update_pressed(coreState *cs)
+{
+    cs->pressed = (struct keyflags) {
+        .left = cs->keys.left - cs->prev_keys.left >= 1,
+        .right = cs->keys.right - cs->prev_keys.right >= 1,
+        .up = cs->keys.up - cs->prev_keys.up >= 1,
+        .down = cs->keys.down - cs->prev_keys.down >= 1,
+        .start = cs->keys.start - cs->prev_keys.start >= 1,
+        .a = cs->keys.a - cs->prev_keys.a >= 1,
+        .b = cs->keys.b - cs->prev_keys.b >= 1,
+        .c = cs->keys.c - cs->prev_keys.c >= 1,
+        .d = cs->keys.d - cs->prev_keys.d >= 1,
+        .escape = cs->keys.escape - cs->prev_keys.escape >= 1,
+    };
 }
 
 int button_emergency_inactive(coreState *cs)

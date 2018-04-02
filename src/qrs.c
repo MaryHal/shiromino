@@ -425,17 +425,17 @@ int usr_field_undo_clear(coreState *cs, void *data)
 
 int qrs_input(game_t *g)
 {
-   coreState *cs = g->origin;
-   struct keyflags *k = NULL;
+    coreState *cs = g->origin;
+    struct keyflags *k = NULL;
 
-   qrsdata *q = g->data;
+    qrsdata *q = g->data;
     struct pracdata *d = q->pracdata;
-   qrs_player *p = q->p1;
+    qrs_player *p = q->p1;
 
-   int i = 0;
+    int i = 0;
     int j = 0;
     int c = 0;
-   int init = 120;
+    int init = 120;
 
     int cell_x = 0;
     int cell_y = 0;
@@ -778,7 +778,7 @@ int qrs_input(game_t *g)
     }
 
     // hacky way to go back to the practice menu if a game is running from that menu
-   if(cs->keys[0]->escape || cs->keys[1]->escape) {
+   if(cs->prev_keys.escape || cs->keys.escape) {
         if(menu_is_practice(cs->menu)) {
             cs->menu_input_override = 1;
             if(d) {
@@ -792,8 +792,8 @@ int qrs_input(game_t *g)
                 }
             }
 
-            cs->keys[0]->escape = 0;
-            cs->keys[1]->escape = 0;
+            cs->prev_keys.escape = 0;
+            cs->keys.escape = 0;
 
             return 0;
         } else
@@ -803,21 +803,19 @@ int qrs_input(game_t *g)
    if(init < 120)
       return 0;
 
-   k = cs->keys[0];
+   k = &cs->keys;
 
     if(q->playback) {
         if((unsigned int)(q->playback_index) == q->replay->len)
             qrs_end_playback(g);
         else {
-            k->up = q->replay->inputs[q->playback_index].up;
-            k->down = q->replay->inputs[q->playback_index].down;
-            k->left = q->replay->inputs[q->playback_index].left;
-            k->right = q->replay->inputs[q->playback_index].right;
-            k->start = q->replay->inputs[q->playback_index].start;
-            k->a = q->replay->inputs[q->playback_index].a;
-            k->b = q->replay->inputs[q->playback_index].b;
-            k->c = q->replay->inputs[q->playback_index].c;
-            k->d = q->replay->inputs[q->playback_index].d;
+            cs->keys_raw = (struct keyflags) { 0 };
+            unpack_input(q->replay->pinputs[q->playback_index], &cs->keys_raw);
+
+            cs->keys = cs->keys_raw;
+
+            update_input_repeat(cs);
+            update_pressed(cs);
 
             q->playback_index++;
         }
@@ -825,7 +823,7 @@ int qrs_input(game_t *g)
 
     if(p->state & (PSFALL | PSLOCK) && !(p->state & PSPRELOCKED))
     {
-        if(k->a == 1 || k->c == 1) {
+        if(cs->pressed.a || cs->pressed.c) {
             if(qrs_rotate(g, p, CCW) == 0) {
                 if(q->max_floorkicks != 0 && q->p1counters->floorkicks >= q->max_floorkicks) {
                     if(q->lock_on_rotate == 1) {
@@ -836,7 +834,7 @@ int qrs_input(game_t *g)
             }
         }
 
-        if(k->b == 1) {
+        if(cs->pressed.b == 1) {
             if(qrs_rotate(g, p, CW) == 0) {
                 if(q->max_floorkicks != 0 && q->p1counters->floorkicks >= q->max_floorkicks) {
                     if(q->lock_on_rotate == 1) {
@@ -853,22 +851,22 @@ int qrs_input(game_t *g)
     if(p->state & (PSFALL | PSLOCK) && !(p->state & PSPRELOCKED))
     {
         q->active_piece_time++;
-        if(k->left == 1 || k->left > (1 + p->speeds->das)) {
+        if(cs->pressed.left || (is_left_input_repeat(cs, 1 + p->speeds->das)) ) {
             qrs_move(g, p, MOVE_LEFT);
-            moved_left = 1;
+            /* moved_left = 1; */
         }
 
-        if(k->right == 1 || k->right > (1 + p->speeds->das)) {
+        if(cs->pressed.right || is_right_input_repeat(cs, 1 + p->speeds->das)) {
             qrs_move(g, p, MOVE_RIGHT);
-            moved_right = 1;
+            /* moved_right = 1; */
         }
 
-        if(moved_left && moved_right) {
-            if(k->left < k->right)
-                qrs_move(g, p, MOVE_LEFT);
-            else if(k->right < k->left)
-                qrs_move(g, p, MOVE_RIGHT);
-        }
+        /* if(moved_left && moved_right) { */
+        /*     if(k->left < k->right) */
+        /*         qrs_move(g, p, MOVE_LEFT); */
+        /*     else if(k->right < k->left) */
+        /*         qrs_move(g, p, MOVE_RIGHT); */
+        /* } */
 
         if(!qrs_isonground(g, p)) {
             p->state &= ~PSLOCK;
@@ -921,16 +919,7 @@ int qrs_input(game_t *g)
     }
 
     if(q->recording) {
-        q->replay->inputs[q->replay->len].left = k->left;
-        q->replay->inputs[q->replay->len].right = k->right;
-        q->replay->inputs[q->replay->len].up = k->up;
-        q->replay->inputs[q->replay->len].down = k->down;
-        q->replay->inputs[q->replay->len].start = k->start;
-        q->replay->inputs[q->replay->len].a = k->a;
-        q->replay->inputs[q->replay->len].b = k->b;
-        q->replay->inputs[q->replay->len].c = k->c;
-        q->replay->inputs[q->replay->len].d = k->d;
-        q->replay->inputs[q->replay->len].escape = 0;
+        q->replay->pinputs[q->replay->len] = pack_input(&cs->keys_raw);
 
         q->replay->len++;
     }
@@ -946,7 +935,7 @@ int qrs_start_record(game_t *g)
 
     q->replay = malloc(sizeof(struct replay));
 
-    memset(q->replay->inputs, 0, sizeof(struct keyflags) * MAX_KEYFLAGS);
+    memset(q->replay->pinputs, 0, sizeof(struct packed_input) * MAX_KEYFLAGS);
         
     q->replay->len = 0;
     q->replay->mlen = 36000;
@@ -1079,7 +1068,7 @@ int qrs_proc_initials(game_t *g)
       return -1;
 
    qrsdata *q = (qrsdata *)(g->data);
-   struct keyflags *k = g->origin->keys[0];
+   struct keyflags *k = &g->origin->keys;
    qrs_player *p = q->p1;
 
     if(k->down && q->lock_held) {
@@ -1122,7 +1111,7 @@ int qrs_irs(game_t *g)
       return -1;
 
    qrsdata *q = (qrsdata *)(g->data);
-   struct keyflags *k = g->origin->keys[0];
+   struct keyflags *k = &g->origin->keys;
    qrs_player *p = q->p1;
 
    int direction = 0;

@@ -572,7 +572,7 @@ int menu_input(game_t *g)
         return -1;
 
     coreState *cs = g->origin;
-    struct keyflags *k = cs->keys[0];
+    struct keyflags *k = &cs->keys;
 
     menudata *d = (menudata *)(g->data);
 
@@ -588,11 +588,13 @@ int menu_input(game_t *g)
     int i = 0;
     int update = 0;
 
+    const int DAS = 18;
+
     if(cs->text_editing) {
         return 0;
     }
 
-    if(k->escape == 1 || cs->keys[1]->escape == 1) {
+    if(cs->pressed.escape == 1) {
         if(!(d->menu_id == MENU_ID_MAIN)) {
             mload_main(g, 0);
             return 0;
@@ -616,7 +618,7 @@ int menu_input(game_t *g)
         cs->text_cut = NULL;
     }
 
-    if((k->up == 1 || k->up > 18) && d->selection > 0)
+    if((cs->pressed.up || is_up_input_repeat(cs, DAS)) && d->selection > 0)
     {
         update = 1;
         for(i = d->selection - 1;; i--)
@@ -631,7 +633,7 @@ int menu_input(game_t *g)
                 i = d->numopts - 1;
             if(d->menu[i]->type != MENU_LABEL) {
                 d->selection = i;
-                if(k->up == 1) sfx_play(&cs->assets->menu_choose);
+                if(cs->pressed.up == 1) sfx_play(&cs->assets->menu_choose);
                 if(d->menu[d->selection]->type == MENU_TEXTINPUT) {
                     cs->text_toggle = menu_text_toggle;
                     cs->text_insert = menu_text_insert;
@@ -663,7 +665,7 @@ int menu_input(game_t *g)
         }
     }
 
-    if((k->down == 1 || k->down > 18) && (d->selection < d->numopts - 1))
+    if((cs->pressed.down || is_down_input_repeat(cs, DAS)) && (d->selection < d->numopts - 1))
     {
         update = 1;
         for(i = d->selection + 1;; i++)
@@ -678,7 +680,7 @@ int menu_input(game_t *g)
                 i = 0;
             if(d->menu[i]->type != MENU_LABEL) {
                 d->selection = i;
-                if(k->down == 1) sfx_play(&cs->assets->menu_choose);
+                if(cs->pressed.down == 1) sfx_play(&cs->assets->menu_choose);
                 if(d->menu[d->selection]->type == MENU_TEXTINPUT) {
                     cs->text_toggle = menu_text_toggle;
                     cs->text_insert = menu_text_insert;
@@ -711,13 +713,13 @@ int menu_input(game_t *g)
     }
 
     if(d->is_paged) {
-        if((k->left == 1 || k->left > 18) && d->page > 0) {
+        if((cs->pressed.left || is_left_input_repeat(cs, DAS)) && d->page > 0) {
             update = 1;
             d->selection = d->selection - d->page_length;
             d->page--;
         }
 
-        if((k->right == 1 || k->right > 18) && d->page < ((d->numopts - 1) / d->page_length)) {
+        if((cs->pressed.right || is_right_input_repeat(cs, DAS)) && d->page < ((d->numopts - 1) / d->page_length)) {
             update = 1;
             d->selection = d->selection + d->page_length;
             d->page++;
@@ -759,7 +761,7 @@ int menu_input(game_t *g)
         case MENU_ACTION:
             d1 = d->menu[d->selection]->data;
 
-            if(k->a == 1 || k->start == 1) {
+            if(cs->pressed.a == 1 || cs->pressed.start == 1) {
                 if(d1->action) {
                     if(d1->action(g, d1->val)) {
                         printf("Received quit signal, shutting down.\n");
@@ -776,14 +778,15 @@ int menu_input(game_t *g)
             d2 = d->menu[d->selection]->data;
 
             if(!d->is_paged) {
-                if( (k->left == 1 || k->left > 14) && d2->selection > 0 ) {
+
+                if((cs->pressed.left || is_left_input_repeat(cs, DAS)) && d2->selection > 0) {
                     d2->selection--;
                     *(d2->param) = d2->vals[d2->selection];
                     if(d->menu[d->selection]->value_update_callback)
                         d->menu[d->selection]->value_update_callback(cs);
                 }
 
-                if( (k->right == 1 || k->right > 14) && d2->selection < (d2->num - 1) ) {
+                if( (cs->pressed.right || is_right_input_repeat(cs, DAS)) && d2->selection < (d2->num - 1) ) {
                     d2->selection++;
                     *(d2->param) = d2->vals[d2->selection];
                     if(d->menu[d->selection]->value_update_callback)
@@ -800,7 +803,7 @@ int menu_input(game_t *g)
             d3 = d->menu[d->selection]->data;
 
             if(!d->is_paged) {
-                if(k->a == 1 || k->left == 1 || k->right == 1) {
+                if(cs->pressed.a || cs->pressed.left || cs->pressed.right) {
                     *(d3->param) = *(d3->param) ? false : true;
                     if(d->menu[d->selection]->value_update_callback)
                         d->menu[d->selection]->value_update_callback(cs);
@@ -812,7 +815,7 @@ int menu_input(game_t *g)
         case MENU_GAME:
             d4 = d->menu[d->selection]->data;
 
-            if(k->a == 1 || k->start == 1)
+            if(cs->pressed.a == 1 || cs->pressed.start == 1)
             {
                 switch(d4->mode)
                 {
@@ -852,11 +855,11 @@ int menu_input(game_t *g)
             d6 = d->menu[d->selection]->data;
 
             if(!d->is_paged) {
-                if( (k->left == 1 || k->left > 14) && d6->selection > 0 ) {
+                if( (cs->pressed.left == 1 || is_left_input_repeat(cs, DAS)) && d6->selection > 0 ) {
                     d6->selection--;
                 }
 
-                if( (k->right == 1 || k->right > 14) && d6->selection < (d6->num - 1) ) {
+                if( (cs->pressed.right == 1 || is_right_input_repeat(cs, DAS)) && d6->selection < (d6->num - 1) ) {
                     d6->selection++;
                 }
 
@@ -864,7 +867,7 @@ int menu_input(game_t *g)
                     d->main_menu_data.opt_selection = d6->selection;
             }
 
-            if(k->a == 1 || k->start == 1)
+            if(cs->pressed.a == 1 || cs->pressed.start == 1)
             {
                 switch(d6->mode)
                 {
@@ -903,7 +906,7 @@ int menu_input(game_t *g)
         case MENU_METAGAME:
             d5 = d->menu[d->selection]->data;
 
-            if(k->a == 1 || k->start == 1)
+            if(cs->pressed.a == 1 || cs->pressed.start == 1)
             {
                 switch(d5->mode)
                 {
