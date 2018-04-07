@@ -119,22 +119,22 @@ struct settings defaultsettings = {
 
 int is_left_input_repeat(coreState *cs, int delay)
 {
-    return cs->keys.left && cs->dir == DAS_LEFT && cs->hold_time >= delay;
+    return cs->keys.left && cs->hold_dir == DAS_LEFT && cs->hold_time >= delay;
 }
 
 int is_right_input_repeat(coreState *cs, int delay)
 {
-    return cs->keys.right && cs->dir == DAS_RIGHT && cs->hold_time >= delay;
+    return cs->keys.right && cs->hold_dir == DAS_RIGHT && cs->hold_time >= delay;
 }
 
 int is_up_input_repeat(coreState *cs, int delay)
 {
-    return cs->keys.up && cs->dir == DAS_UP && cs->hold_time >= delay;
+    return cs->keys.up && cs->hold_dir == DAS_UP && cs->hold_time >= delay;
 }
 
 int is_down_input_repeat(coreState *cs, int delay)
 {
-    return cs->keys.down && cs->dir == DAS_DOWN && cs->hold_time >= delay;
+    return cs->keys.down && cs->hold_dir == DAS_DOWN && cs->hold_time >= delay;
 }
 
 struct bindings *bindings_copy(struct bindings *src)
@@ -261,7 +261,7 @@ coreState *coreState_create()
     cs->prev_keys = (struct keyflags) { 0 };
     cs->keys = (struct keyflags) { 0 };
     cs->pressed = (struct keyflags) { 0 };
-    cs->dir = DAS_NONE;
+    cs->hold_dir = DAS_NONE;
     cs->hold_time = 0;
 
     cs->mouse_x = 0;
@@ -1263,22 +1263,22 @@ void update_input_repeat(coreState *cs)
 {
     struct keyflags *k = &cs->keys;
 
-    if (cs->dir == DAS_LEFT && k->right) { cs->hold_time = 0; cs->dir = DAS_RIGHT; }
-    else if (cs->dir == DAS_RIGHT && k->left) { cs->hold_time = 0; cs->dir = DAS_LEFT; }
-    else if (cs->dir == DAS_UP && k->down) { cs->hold_time = 0; cs->dir = DAS_DOWN; }
-    else if (cs->dir == DAS_DOWN && k->up) { cs->hold_time = 0; cs->dir = DAS_UP; }
+    if (cs->hold_dir == DAS_LEFT && k->right) { cs->hold_time = 0; cs->hold_dir = DAS_RIGHT; }
+    else if (cs->hold_dir == DAS_RIGHT && k->left) { cs->hold_time = 0; cs->hold_dir = DAS_LEFT; }
+    else if (cs->hold_dir == DAS_UP && k->down) { cs->hold_time = 0; cs->hold_dir = DAS_DOWN; }
+    else if (cs->hold_dir == DAS_DOWN && k->up) { cs->hold_time = 0; cs->hold_dir = DAS_UP; }
 
-    if (cs->dir == DAS_LEFT && k->left)        cs->hold_time++;
-    else if (cs->dir == DAS_RIGHT && k->right) cs->hold_time++;
-    else if (cs->dir == DAS_UP && k->up)       cs->hold_time++;
-    else if (cs->dir == DAS_DOWN && k->down)   cs->hold_time++;
+    if (cs->hold_dir == DAS_LEFT && k->left)        cs->hold_time++;
+    else if (cs->hold_dir == DAS_RIGHT && k->right) cs->hold_time++;
+    else if (cs->hold_dir == DAS_UP && k->up)       cs->hold_time++;
+    else if (cs->hold_dir == DAS_DOWN && k->down)   cs->hold_time++;
     else
     {
-        if (k->left)       cs->dir = DAS_LEFT;
-        else if (k->right) cs->dir = DAS_RIGHT;
-        else if (k->up)    cs->dir = DAS_UP;
-        else if (k->down)  cs->dir = DAS_DOWN;
-        else cs->dir = DAS_NONE;
+        if (k->left)       cs->hold_dir = DAS_LEFT;
+        else if (k->right) cs->hold_dir = DAS_RIGHT;
+        else if (k->up)    cs->hold_dir = DAS_UP;
+        else if (k->down)  cs->hold_dir = DAS_DOWN;
+        else cs->hold_dir = DAS_NONE;
 
         cs->hold_time = 0;
     }

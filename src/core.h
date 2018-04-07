@@ -170,7 +170,7 @@ struct coreState_ {
     struct keyflags prev_keys;
     struct keyflags keys;
     struct keyflags pressed;
-    das_direction dir;
+    das_direction hold_dir;
     int hold_time;
     
     SDL_Joystick *joystick;
