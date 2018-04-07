@@ -803,23 +803,29 @@ int qrs_input(game_t *g)
    if(init < 120)
       return 0;
 
-   k = &cs->keys;
+    /* if(q->playback) { */
+    /*     if((unsigned int)(q->playback_index) == q->replay->len) */
+    /*         qrs_end_playback(g); */
+    /*     else { */
+    /*         cs->keys_raw = (struct keyflags) { 0 }; */
+    /*         unpack_input(q->replay->pinputs[q->playback_index], &cs->keys_raw); */
 
-    if(q->playback) {
-        if((unsigned int)(q->playback_index) == q->replay->len)
-            qrs_end_playback(g);
-        else {
-            cs->keys_raw = (struct keyflags) { 0 };
-            unpack_input(q->replay->pinputs[q->playback_index], &cs->keys_raw);
+    /*         cs->keys = cs->keys_raw; */
 
-            cs->keys = cs->keys_raw;
+    /*         update_input_repeat(cs); */
+    /*         update_pressed(cs); */
 
-            update_input_repeat(cs);
-            update_pressed(cs);
+    /*         q->playback_index++; */
+    /*     } */
+    /* } */
 
-            q->playback_index++;
-        }
-    }
+    /* if(q->recording) { */
+    /*     q->replay->pinputs[q->replay->len] = pack_input(&cs->keys_raw); */
+
+    /*     q->replay->len++; */
+    /* } */
+
+    k = &cs->keys;
 
     if(p->state & (PSFALL | PSLOCK) && !(p->state & PSPRELOCKED))
     {
@@ -908,12 +914,6 @@ int qrs_input(game_t *g)
     if(!k->down) {
         if(q->lock_held)
             q->lock_held = 0;
-    }
-
-    if(q->recording) {
-        q->replay->pinputs[q->replay->len] = pack_input(&cs->keys_raw);
-
-        q->replay->len++;
     }
 
    return 0;

@@ -1703,6 +1703,8 @@ int mload_options(game_t *g, int val)
     return 0;
 }
 
+#define BUF_SIZE 64
+
 int mload_replay(game_t *g, int val)
 {
     menudata *d = (menudata *)(g->data);
@@ -1747,7 +1749,6 @@ int mload_replay(game_t *g, int val)
             d->menu[i] = menu_opt_create(MENU_GAME, NULL, NULL);
             r = &replaylist[i - 1];
 
-            const uint8_t BUF_SIZE = 64;
             char replayDescriptor[BUF_SIZE];
 
             get_replay_descriptor(r, replayDescriptor, BUF_SIZE);

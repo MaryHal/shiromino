@@ -34,7 +34,6 @@ struct replay {
     int index;
 
     struct packed_input pinputs[MAX_KEYFLAGS];
-    /* struct keyflags inputs[MAX_KEYFLAGS]; */
 };
 
 void get_replay_descriptor(struct replay *r, char *buffer, size_t bufferLength);

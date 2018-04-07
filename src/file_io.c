@@ -2,10 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <errno.h>
 #include <time.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
@@ -18,10 +18,10 @@ struct settings *parse_cfg(const char *filename)
     if(!filename)
         return NULL;
 
-    if(access(filename, F_OK) || access(filename, R_OK)) {
-        perror("Configuration file could not be accessed");
-        return NULL;
-    }
+    //if(access(filename, F_OK) || access(filename, R_OK)) {
+    //    perror("Configuration file could not be accessed");
+    //    return NULL;
+    //}
 
     struct settings *s = malloc(sizeof(struct settings));
     struct bstrList *cfg_file_lines = split_file(filename);
@@ -69,12 +69,12 @@ struct settings *parse_cfg(const char *filename)
     if(s->video_scale == OPTION_INVALID || s->video_scale < 1 || s->video_scale > 4)
         s->video_scale = 1;
 
-    if(s->home_path) {
-        if(stat(s->home_path, &info) != 0 || !S_ISDIR(info.st_mode)) {
-            s->home_path = NULL;
-            log_err("Invalid HOME_PATH setting");
-        }
-    }
+    //if(s->home_path) {
+    //    if(stat(s->home_path, &info) != 0 || !S_ISDIR(info.st_mode)) {
+    //        s->home_path = NULL;
+    //        log_err("Invalid HOME_PATH setting");
+    //    }
+    //}
 
     return s;
 }

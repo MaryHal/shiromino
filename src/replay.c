@@ -3,6 +3,8 @@
 #include "game_qs.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 enum packed_input_mask {
     pi_left   = 1 << 0,
@@ -43,29 +45,29 @@ void unpack_input(struct packed_input p, struct keyflags *out_keys)
     out_keys->d     = p.data & pi_d;
 }
 
+#define REPLAY_DESCRIPTOR_BUF_SIZE 32
 void get_replay_descriptor(struct replay *r, char *buffer, size_t bufferLength)
 {
-    const uint8_t BUF_SIZE = 32;
-    char modeStringBuffer[BUF_SIZE];
+    char modeStringBuffer[REPLAY_DESCRIPTOR_BUF_SIZE];
 
     switch(r->mode) {
         case MODE_PENTOMINO:
-            strncpy(modeStringBuffer, "PENTOMINO", BUF_SIZE);
+            strncpy(modeStringBuffer, "PENTOMINO", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         case MODE_G2_DEATH:
-            strncpy(modeStringBuffer, "G2 DEATH", BUF_SIZE);
+            strncpy(modeStringBuffer, "G2 DEATH", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         case MODE_G3_TERROR:
-            strncpy(modeStringBuffer, "G3 TERROR", BUF_SIZE);
+            strncpy(modeStringBuffer, "G3 TERROR", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         case MODE_G1_20G:
-            strncpy(modeStringBuffer, "G1 20G", BUF_SIZE);
+            strncpy(modeStringBuffer, "G1 20G", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         case MODE_G1_MASTER:
-            strncpy(modeStringBuffer, "G1 MASTER", BUF_SIZE);
+            strncpy(modeStringBuffer, "G1 MASTER", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         case MODE_G2_MASTER:
-            strncpy(modeStringBuffer, "G2 MASTER", BUF_SIZE);
+            strncpy(modeStringBuffer, "G2 MASTER", REPLAY_DESCRIPTOR_BUF_SIZE);
             break;
         default:
             break;
@@ -74,9 +76,9 @@ void get_replay_descriptor(struct replay *r, char *buffer, size_t bufferLength)
     nz_timer *t = nz_timer_create(60);
     t->time = r->time;
 
-    char dateBuffer[BUF_SIZE];
+    char dateBuffer[REPLAY_DESCRIPTOR_BUF_SIZE];
     struct tm *ts = localtime(&r->date);
-    strftime(dateBuffer, BUF_SIZE, "%Y.%m.%d", ts);
+    strftime(dateBuffer, REPLAY_DESCRIPTOR_BUF_SIZE, "%Y.%m.%d", ts);
 
     snprintf(buffer, bufferLength, "%s  %-10s %4d-%-4d  %02d:%02d:%02d   %s",
              get_grade_name(r->grade),

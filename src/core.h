@@ -59,11 +59,11 @@ struct keyflags {
     Uint8 right;
     Uint8 up;
     Uint8 down;
-    Uint8 start;
     Uint8 a;
     Uint8 b;
     Uint8 c;
     Uint8 d;
+    Uint8 start;
     Uint8 escape;
 };
 
@@ -239,6 +239,7 @@ int run(coreState *cs);
 int procevents(coreState *cs);
 int procgame(game_t *g, int input_enabled);
 
+void handle_replay_input(coreState* cs);
 void update_input_repeat(coreState *cs);
 void update_pressed(coreState *cs);
 
