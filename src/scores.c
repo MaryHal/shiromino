@@ -176,7 +176,7 @@ void scoredb_add(struct scoredb *s, struct player* p, struct replay *r)
     const int ret = sqlite3_step(sql);
     check(ret == SQLITE_DONE, "Could not insert value into scores table: %s", sqlite3_errmsg(s->db));
 
-    log_info("Wrote replay (%I64lu): %s", replayLen, replayDescriptor);
+    log_info("Wrote replay (%lu): %s", (unsigned long)replayLen, replayDescriptor);
 
  error:
     sqlite3_finalize(sql);
