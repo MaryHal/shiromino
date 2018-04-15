@@ -803,28 +803,6 @@ int qrs_input(game_t *g)
    if(init < 120)
       return 0;
 
-    /* if(q->playback) { */
-    /*     if((unsigned int)(q->playback_index) == q->replay->len) */
-    /*         qrs_end_playback(g); */
-    /*     else { */
-    /*         cs->keys_raw = (struct keyflags) { 0 }; */
-    /*         unpack_input(q->replay->pinputs[q->playback_index], &cs->keys_raw); */
-
-    /*         cs->keys = cs->keys_raw; */
-
-    /*         update_input_repeat(cs); */
-    /*         update_pressed(cs); */
-
-    /*         q->playback_index++; */
-    /*     } */
-    /* } */
-
-    /* if(q->recording) { */
-    /*     q->replay->pinputs[q->replay->len] = pack_input(&cs->keys_raw); */
-
-    /*     q->replay->len++; */
-    /* } */
-
     k = &cs->keys;
 
     if(p->state & (PSFALL | PSLOCK) && !(p->state & PSPRELOCKED))
@@ -881,17 +859,20 @@ int qrs_input(game_t *g)
 
         if(k->down)
         {
+            const bool lock_protect_enabled = q->is_practice ? q->pracdata->lock_protect : q->lock_protect;
+            const bool should_lock_protect = lock_protect_enabled && q->lock_held;
+
             q->soft_drop_counter++;
             if(p->state & PSFALL) {
                 qrs_fall(g, p, 256);
-                if(qrs_isonground(g, p)) {
+                if(qrs_isonground(g, p) && !should_lock_protect) {
                     qrs_fall(g, p, 256);
                     q->lock_held = 1;
                     p->state &= ~PSLOCK;
                     p->state &= ~PSFALL;
                     p->state |= PSLOCKPRESSED;
                 }
-            } else if(p->state & PSLOCK) {
+            } else if(p->state & PSLOCK && !should_lock_protect) {
                 q->lock_held = 1;
                 p->state &= ~PSLOCK;
                 p->state |= PSLOCKPRESSED;
@@ -1063,24 +1044,6 @@ int qrs_proc_initials(game_t *g)
    struct keyflags *k = &g->origin->keys;
    qrs_player *p = q->p1;
 
-    if(k->down && q->lock_held) {
-        if(q->lock_protect) {
-            if(q->pracdata) {
-                if(q->pracdata->lock_protect) {
-                    k->down = 0;
-                    q->lock_held = 0;
-                }
-            } else {
-                k->down = 0;
-                q->lock_held = 0;
-            }
-        } else if(q->pracdata) {
-            if(q->pracdata->lock_protect == 1) {
-                k->down = 0;
-                q->lock_held = 0;
-            }
-        }
-    }
 
     if(k->d && q->hold_enabled)
     {
