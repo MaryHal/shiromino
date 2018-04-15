@@ -743,122 +743,6 @@ int procevents(coreState *cs)
         case SDL_QUIT:
             return 1;
 
-        case SDL_JOYAXISMOTION:
-            k = &cs->keys;
-
-            if (event.jaxis.which == 0)
-            {
-                if (event.jaxis.axis == 0) // x axis
-                {
-                    if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
-                    {
-                        k->left = 1;
-                        k->right = 0;
-                    }
-                    else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
-                    {
-                        k->right = 1;
-                        k->left = 0;
-                    }
-                    else
-                    {
-                        k->right = 0;
-                        k->left = 0;
-                    }
-                }
-                else if (event.jaxis.axis == 1) // y axis
-                {
-                    if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
-                    {
-                        k->up = 1;
-                        k->down = 0;
-                    }
-                    else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
-                    {
-                        k->down = 1;
-                        k->up = 0;
-                    }
-                    else
-                    {
-                        k->up = 0;
-                        k->down = 0;
-                    }
-                }
-
-            }
-
-            break;
-
-        case SDL_JOYHATMOTION:
-            k = &cs->keys;
-
-            if (event.jhat.which == 0)
-            {
-                if (event.jhat.hat == 0)
-                {
-                    if (event.jhat.value == SDL_HAT_LEFT)
-                    {
-                        k->left = 1;
-                        k->right = 0;
-                    }
-                    else if (event.jhat.value == SDL_HAT_RIGHT)
-                    {
-                        k->right = 1;
-                        k->left = 0;
-                    }
-                    else if (event.jhat.value == SDL_HAT_UP)
-                    {
-                        k->up = 1;
-                        k->down = 0;
-                    }
-                    else if (event.jhat.value == SDL_HAT_DOWN)
-                    {
-                        k->down = 1;
-                        k->up = 0;
-                    }
-                    else
-                    {
-                        k->right = 0;
-                        k->left = 0;
-                        k->up = 0;
-                        k->down = 0;
-                    }
-                }
-            }
-
-            break;
-
-        case SDL_JOYBUTTONDOWN:
-        case SDL_JOYBUTTONUP:
-            k = &cs->keys;
-            if (joy) {
-                rc = SDL_JoystickGetButton(joy, 0);
-                if (!rc)
-                    k->a = 0;
-                if (rc && k->a == 0)
-                    k->a = 1;
-
-                rc = SDL_JoystickGetButton(joy, 3);
-                if (!rc)
-                    k->b = 0;
-                if (rc && k->b == 0)
-                    k->b = 1;
-
-                rc = SDL_JoystickGetButton(joy, 5);
-                if (!rc)
-                    k->c = 0;
-                if (rc && k->c == 0)
-                    k->c = 1;
-
-                rc = SDL_JoystickGetButton(joy, 1);
-                if (!rc)
-                    k->d = 0;
-                if (rc && k->d == 0)
-                    k->d = 1;
-            }
-
-            break;
-
         case SDL_KEYDOWN:
             if (event.key.repeat)
                 break;
@@ -974,41 +858,6 @@ int procevents(coreState *cs)
 
         case SDL_KEYUP:
             kc = event.key.keysym.sym;
-
-            if (cs->settings->keybinds) {
-                k = &cs->keys;
-                kb = cs->settings->keybinds;
-
-                if (kc == kb->left)
-                    k->left = 0;
-
-                if (kc == kb->right)
-                    k->right = 0;
-
-                if (kc == kb->up)
-                    k->up = 0;
-
-                if (kc == kb->down)
-                    k->down = 0;
-
-                if (kc == kb->start)
-                    k->start = 0;
-
-                if (kc == kb->a)
-                    k->a = 0;
-
-                if (kc == kb->b)
-                    k->b = 0;
-
-                if (kc == kb->c)
-                    k->c = 0;
-
-                if (kc == kb->d)
-                    k->d = 0;
-
-                if (kc == kb->escape)
-                    k->escape = 0;
-            }
 
             if (kc == SDLK_LEFT)
                 cs->left_arrow_das = 0;
@@ -1146,11 +995,11 @@ int procevents(coreState *cs)
 
     const uint8_t *keystates = SDL_GetKeyboardState(NULL);
 
-    if (cs->settings->keybinds) {
-        k = &cs->keys_raw;
-        kb = cs->settings->keybinds;
+    k = &cs->keys_raw;
+    *k = (struct keyflags) { 0 };
 
-        *k = (struct keyflags) { 0 };
+    if (cs->settings->keybinds) {
+        kb = cs->settings->keybinds;
 
         if (keystates[SDL_GetScancodeFromKey(kb->left)])
             k->left = 1;
@@ -1181,10 +1030,81 @@ int procevents(coreState *cs)
 
         if (keystates[SDL_GetScancodeFromKey(kb->escape)])
             k->escape = 1;
-
-        cs->keys = cs->keys_raw;
     }
 
+    if (joy) {
+        rc = SDL_JoystickGetButton(joy, 0);
+        if (!rc)
+            k->a = 0;
+        if (rc && k->a == 0)
+            k->a = 1;
+
+        rc = SDL_JoystickGetButton(joy, 3);
+        if (!rc)
+            k->b = 0;
+        if (rc && k->b == 0)
+            k->b = 1;
+
+        rc = SDL_JoystickGetButton(joy, 5);
+        if (!rc)
+            k->c = 0;
+        if (rc && k->c == 0)
+            k->c = 1;
+
+        rc = SDL_JoystickGetButton(joy, 1);
+        if (!rc)
+            k->d = 0;
+        if (rc && k->d == 0)
+            k->d = 1;
+    }
+
+    const Sint16 x_axis = SDL_JoystickGetAxis(joy, 0);
+    if (x_axis < -JOYSTICK_DEAD_ZONE)
+    {
+        k->left = 1;
+        k->right = 0;
+    }
+    else if (x_axis > JOYSTICK_DEAD_ZONE)
+    {
+        k->right = 1;
+        k->left = 0;
+    }
+
+    const Sint16 y_axis = SDL_JoystickGetAxis(joy, 1);
+    if (y_axis < -JOYSTICK_DEAD_ZONE)
+    {
+        k->up = 1;
+        k->down = 0;
+    }
+    else if (y_axis > JOYSTICK_DEAD_ZONE)
+    {
+        k->down = 1;
+        k->up = 0;
+    }
+
+    rc = SDL_JoystickGetHat(joy, 0);
+    if (rc == SDL_HAT_LEFT)
+    {
+        k->left = 1;
+        k->right = 0;
+    }
+    else if (rc == SDL_HAT_RIGHT)
+    {
+        k->right = 1;
+        k->left = 0;
+    }
+    else if (rc == SDL_HAT_UP)
+    {
+        k->up = 1;
+        k->down = 0;
+    }
+    else if (rc == SDL_HAT_DOWN)
+    {
+        k->down = 1;
+        k->up = 0;
+    }
+
+    cs->keys = cs->keys_raw;
 
     SDL_GetMouseState(&cs->mouse_x, &cs->mouse_y);
 
@@ -1269,7 +1189,7 @@ void update_input_repeat(coreState *cs)
     else if (cs->hold_dir == DAS_UP && k->down) { cs->hold_time = 0; cs->hold_dir = DAS_DOWN; }
     else if (cs->hold_dir == DAS_DOWN && k->up) { cs->hold_time = 0; cs->hold_dir = DAS_UP; }
 
-    if (cs->hold_dir == DAS_LEFT && k->left)        cs->hold_time++;
+    else if (cs->hold_dir == DAS_LEFT && k->left)   cs->hold_time++;
     else if (cs->hold_dir == DAS_RIGHT && k->right) cs->hold_time++;
     else if (cs->hold_dir == DAS_UP && k->up)       cs->hold_time++;
     else if (cs->hold_dir == DAS_DOWN && k->down)   cs->hold_time++;
